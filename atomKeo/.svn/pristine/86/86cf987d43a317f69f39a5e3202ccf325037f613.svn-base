@@ -1,0 +1,100 @@
+<%@page import="com.agiledge.atom.entities.TripDetail"%>
+<%@page import="java.util.ArrayList"%>
+
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Trace Vehicle</title>
+<script type="text/javascript" src="js/jquery-latest.js"></script>
+<style type="text/css">
+@import "css/jquery.datepick.css";
+</style>
+<script type="text/javascript" src="js/jquery.datepick.js"></script>
+</head>
+<body>
+	<%
+		String tripId = "";
+		tripId = request.getParameter("tripid");
+	%>
+
+
+
+	<hr />
+
+	<div id="body">
+		<div class="content">
+			<p>&nbsp;</p>
+			<h3>Panic Alarm Details</h3>
+
+
+
+
+			<form name="panicAction" action="PanicAlarmStop" method="post">
+				<input type="hidden" value="<%=tripId%>" id="tripId" name="tripId">
+				<%
+					TripDetail dto = (TripDetail) request.getAttribute("tripdetails");
+					try {
+				%>
+
+				<table align="center">
+					<tr>
+						<td colspan="4" align="center"><b>Vehicle <%=dto.getVehicleBean().getRegNo()%>
+						</b></td>
+					</tr>
+					<tr>
+						<td colspan="4" align="center"><b>Driver Details</b></td>
+					</tr>
+					<tr>
+						<td colspan="4" align="center">Name:<%=dto.getDriver().getName()%></td>
+					</tr>
+					<tr>
+						<td colspan="4" align="center">Contact:<%=dto.getDriver().getContact()%></td>
+
+					</tr>
+
+
+					<tr>
+						<td colspan="4" align="center"></td>
+					</tr>
+
+
+					<tr>
+						<td>Cause Of Alarm
+						<select name="causeOfalarm"><option>Select</option>
+								<option value="False Alarm">False Alarm</option>
+								<option value="Accident">Accident</option>
+								<option value="Rash Driving">Rash Driving</option>
+								<option value="Driver Issue">Driver Issue</option>
+								<option value="Break Down">Break Down</option></select></td>
+					</tr>
+					<tr>
+						<td rowspan="3">Primary Action
+						<textarea name="actionDesc" rows="1"
+								cols="50"></textarea></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td colspan="2"><input type="submit" value="Add"
+							class="formbutton">&nbsp;&nbsp;&nbsp;&nbsp;<input
+							type="reset" value="Reset" class="formbutton"></td>
+						<td></td>
+					</tr>
+
+
+				</table>
+			</form>
+			<p>&nbsp;&nbsp;&nbsp;&nbsp;</p>
+			<%
+				} catch (Exception e) {
+					System.out.println("Error" + e);
+				}
+			%>
+
+		</div>
+	</div>
+	
+</body>
+</html>

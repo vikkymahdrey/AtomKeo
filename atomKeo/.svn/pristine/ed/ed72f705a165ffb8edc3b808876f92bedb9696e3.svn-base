@@ -1,0 +1,145 @@
+package com.agiledge.atom.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.agiledge.atom.dao.intfc.VehicleTypeDao;
+import com.agiledge.atom.dto.DriverVehicleDto;
+import com.agiledge.atom.dto.VehicleDto;
+import com.agiledge.atom.dto.VehicleTypeDto;
+import com.agiledge.atom.entities.Driver;
+import com.agiledge.atom.entities.DriverVehicle;
+import com.agiledge.atom.entities.Site;
+import com.agiledge.atom.entities.Tripshuttle;
+import com.agiledge.atom.entities.Vehicle;
+import com.agiledge.atom.entities.VehicleType;
+import com.agiledge.atom.service.intfc.DriverService;
+import com.agiledge.atom.service.intfc.SiteService;
+import com.agiledge.atom.service.intfc.TripService;
+import com.agiledge.atom.service.intfc.VehicleTypeService;
+
+@Service
+public class VehicleTypeServiceImpl implements VehicleTypeService {
+	private final static Logger logger = Logger.getLogger(VehicleTypeServiceImpl.class);
+	@Autowired
+	private VehicleTypeDao vehicleTypeDao;
+	
+	@Autowired
+	private SiteService siteService;
+	
+	@Autowired
+	private DriverService driverService;
+	
+	@Autowired
+	private TripService tripService;
+	
+	
+	
+	public List<VehicleType> getAllVehicleType() throws Exception{
+		return vehicleTypeDao.getAllVehicleType();
+		
+	}
+	 public VehicleType getVehicleTypeById(int vehicleTypeId) throws Exception {
+		return vehicleTypeDao.getVehicleTypeById(vehicleTypeId);
+	}
+	public VehicleType insertVehicleType(VehicleType vt) throws Exception {
+		return vehicleTypeDao.insertVehicleType(vt);
+	}
+	
+	
+	public ArrayList<VehicleTypeDto> setVehicleTypeCount(int siteId) throws Exception
+	{
+		ArrayList<VehicleTypeDto> vehicleTypeBySiteId=getAllVehicleTypeBySite(siteId);	
+		for(VehicleTypeDto typeDto: vehicleTypeBySiteId)
+		{
+			typeDto.setCount(999);
+		}
+	return vehicleTypeBySiteId;	
+	}
+	public ArrayList<VehicleTypeDto> getAllVehicleTypeBySite(int siteId) throws Exception{
+				return vehicleTypeDao.getAllVehicleTypeBySite(siteId);
+	}
+	
+	public void getAllVehicleTypeByToAppend(ArrayList<VehicleTypeDto> vehicleType) throws Exception {
+		vehicleTypeDao.getAllVehicleTypeByToAppend(vehicleType);
+	}
+	public ArrayList<VehicleDto> getVehicleTrackInInterval(String tripId) throws Exception {
+			return vehicleTypeDao.getVehicleTrackInInterval(tripId);
+	}
+	public ArrayList<VehicleDto> vehicleTrack(String tripId) throws Exception {
+		return vehicleTypeDao.vehicleTrack(tripId);
+	}
+	public ArrayList<DriverVehicleDto> getVehicleDetails(String vehicleId) throws Exception {
+		return vehicleTypeDao.getVehicle(vehicleId);
+	}
+	public Vehicle getVehicleById(String vehicleId) throws Exception {
+		return vehicleTypeDao.getVehicleById(vehicleId);
+	}
+	public List<Vehicle> getAllVehicle() throws Exception {
+		return vehicleTypeDao.getAllVehicle();
+	}
+	public Vehicle getVehicleByIdNotStatus(String vehicleId) throws Exception {
+		return vehicleTypeDao.getVehicleByIdNotStatus(vehicleId);
+	}
+	public Vehicle updateVehicleStatus(Vehicle v) throws Exception {
+		return vehicleTypeDao.updateVehicleStatus(v);
+	}
+	public Vehicle addVehicle(Vehicle v) throws Exception {
+		return vehicleTypeDao.addVehicle(v);
+	}
+	public VehicleType setSiteVehicle(VehicleType vt) throws Exception {
+		return vehicleTypeDao.setSiteVehicle(vt);
+	}
+	public VehicleType setSiteVehicle(String vehicleType, String siteId) throws Exception {
+		VehicleType vt=getVehicleTypeById(Integer.parseInt(vehicleType));
+		List<Site> sites=new ArrayList<Site>();
+		Site site=siteService.getSiteById(Integer.parseInt(siteId));
+		sites.add(site);
+		vt.setSites(sites);
+		return setSiteVehicle(vt);
+	}
+	public List<Site> getSiteByVehicleType(VehicleType vt) throws Exception {
+		return vt.getSites();
+	}
+	public DriverVehicle addDriverVehicle(String vehicle,String[] vehicleDrivers) throws Exception {
+		Vehicle veh=getVehicleById(vehicle);
+		DriverVehicle drVeh=null;
+		for (String driverId : vehicleDrivers) {
+			DriverVehicle dv=null;
+			Driver driver=driverService.getDriverById(driverId);
+			dv=new DriverVehicle();
+			dv.setDriver(driver);
+			dv.setVehicle(veh);
+			 drVeh=driverService.addDriversToVehicle(dv);
+		}
+		return drVeh;
+	}
+
+	public List<Tripshuttle> getShuttleTripDetails(String site, String fromDate,String toDate, String vehicle) throws Exception {
+				List<Vehicle> vlist=vehicleTypeDao.getVehiclesByIdOrNot(vehicle);
+					
+				
+				List<Tripshuttle> resultantTripShuttles=new ArrayList<Tripshuttle>();
+				if(vlist!=null && vlist.size()>0){
+					logger.debug("vehicleSize as "+vlist.size());
+					for(Vehicle v :vlist){
+						List<Tripshuttle> tripShuttles=tripService.getShuttleTripDetailsByVehicleImei(site,fromDate,toDate,v.getVehicleImei());
+						resultantTripShuttles.addAll(tripShuttles);
+					}
+				}
+				return resultantTripShuttles;
+	}
+	public String getVehicleByImei(String imei) throws Exception {
+		return vehicleTypeDao.getVehicleByImei(imei);
+	}
+
+	public String getDistance(String imei,String fromDate,String toDate){
+		return vehicleTypeDao.getDistance(imei, fromDate, toDate);
+	}
+
+
+}

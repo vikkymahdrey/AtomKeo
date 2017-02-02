@@ -1,0 +1,10 @@
+package com.agiledge.atom.service.intfc;
+
+import org.json.simple.JSONObject;
+
+public interface DeviceService {
+	
+	public JSONObject checkpassword(JSONObject json);
+	public JSONObject inserttrackingdata(JSONObject json);
+	public JSONObject stoptrip(JSONObject json);
+}

@@ -1,0 +1,283 @@
+<%@page import="com.agiledge.atom.config.files.*"%>
+<%@page import="com.itextpdf.text.log.SysoLogger"%>
+<%@page import="java.util.*"%>
+<%@page import="com.agiledge.atom.dao.intfc.OtherDao"%>
+<%@page import="com.agiledge.atom.constants.*"%>
+<%@page import="com.agiledge.atom.entities.*"%>
+<%@page import="org.displaytag.decorator.TotalTableDecorator"%>
+<%@page import="org.displaytag.decorator.MultilevelTotalTableDecorator"%>
+<%@page import="com.agiledge.atom.dto.*"%>
+<%@page import="com.itextpdf.text.log.SysoLogger"%>
+
+
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<%@ taglib uri="http://www.nfl.com" prefix="disp"%>
+<%@ taglib uri="http://displaytag.sf.net" prefix="display"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<title>Distance Travel Report</title>
+<script type="text/javascript" src="js/jquery-latest.js"></script>
+<style type="text/css">
+@import "css/jquery.datepick.css";
+</style>
+<% request.setAttribute("contextPath", request.getContextPath()); %>
+<link rel="stylesheet" type="text/css" href="${contextPath}/css/displaytag.css" />
+<style type="text/css">
+	div#filterContainer {
+		height: auto;
+		background-colore : red;
+		width: 100%;
+		height: 50px;
+	}
+	div#filterContainer > div {
+		display: inline;
+		 float: left;
+		 padding-right:20px;
+	}
+		div#filterContainer >div > div:FIRST-CHILD {
+		display: inline;
+		 float: left;
+		 padding-right:20px;
+		 margin-bottom: 5px; 
+		 margin-top: 10px;
+	}
+	
+	div#reportDiv {
+		margin-top:25px;
+	}
+</style>
+
+<script type="text/javascript" src="js/jquery.datepick.js"></script>
+<script type="text/javascript" src="js/dispx.js"></script>
+
+<script type="text/javascript">
+	$(document).ready(function() {
+        
+        $("#fromDate").datepick();
+        $("#toDate").datepick();
+
+        
+	});
+</script>
+
+<script type="text/javascript">
+
+ 
+   function validate()
+{
+	  
+	var siteId=document.getElementById("site").value;   
+   	var vehicle=document.getElementById("chosenregNo").value;  
+    var fromdate=document.getElementById("fromDate").value;
+    var todate=document.getElementById("toDate").value;
+      if(siteId==0 )
+    {
+        alert("Choose site");
+        return false;
+    }
+    
+      /* else if(vehicle==0 || vehicle=="" )
+    {
+        alert("Choose Vehicle");
+                return false;
+    } */
+    
+    else if(fromdate.length<1 )
+    {
+        alert("Choose From Date");
+          return false;
+    }    
+    else if(todate.length<1)
+    {
+        alert("Choose To Date");
+          return false;
+    }
+    
+     else
+    {
+        return true;                            
+    }
+   
+
+}
+
+            
+        </script>
+
+</head>
+<%
+Employee userLoggedIn = (Employee) session.getAttribute("userLoggedIn");	
+		if (userLoggedIn == null) {
+				String param = request.getServletPath().substring(1) + "___"
+						+ request.getQueryString();
+				response.sendRedirect("/?page=" + param);
+			} else {
+				// empid = Long.parseLong(employeeId); 
+		%>
+		<%@include file="Header.jsp"%> 
+		<%
+			 }
+	
+	String fname1=("ShuttleDistanceTravelReport :").concat(new Date().toString()).concat(".csv");
+	String fname2=("ShuttleDistanceTravelReport :").concat(new Date().toString()).concat(".xls");
+	String fname3=("ShuttleDistanceTravelReport :").concat(new Date().toString()).concat(".xml");
+	
+	String site=request.getParameter("site");
+	String fromDate = request.getParameter("fromDate");
+	String toDate = request.getParameter("toDate");
+	String vehicle = request.getParameter("chosenregNo");
+	
+	if(site == null ) site = "";
+		
+	%>
+	
+	<div id="body">
+		<div class="content">
+	   		<h2 align="center">Kilometers Covered by Vehicle</h2>
+			<hr /><div>
+			<form name="form1" method="POST" action="shuttleDistanceReportSubmit" id="shuttleDistanceReport"
+		onsubmit="return validate();" >
+					<div id="filterContainer" style="margin-left: 5%" >
+							<div><div>Choose Site</div>
+							<div>
+													
+							 <%  @SuppressWarnings("unchecked")
+							    List<Site> sites=(List<Site>)request.getAttribute("sites");
+							    System.out.println("size of sites"+sites.size());
+							    %>
+							  <select name="site" id="site" >
+									<option value="0">--select--</option>
+								 	<%
+										for (Site s : sites) {
+											String siteSelect = "";
+											if (site.equals(""+s.getId())) {
+												siteSelect = "selected";
+											}
+									%>
+
+									<option <%=siteSelect%> value="<%=s.getId()%>">
+										<%=s.getSiteName()%>
+									</option>
+
+
+									<%
+										}
+									%> 
+							</select> 
+									
+							</div></div>
+							
+							<div>
+							<div>Select Vehicle
+							</div>
+							<div id="regNo"><select name="chosenregNo" id="chosenregNo" >
+								<option value="0">All</option>
+							<%
+							List<Vehicle> vehicles=(List<Vehicle>)request.getAttribute("vehicles");
+							if(vehicles!=null && vehicles.size()>0) {
+								for (Vehicle v : vehicles) {
+									String vehicleSelect="";
+										try {									
+												if(request.getParameter("chosenregNo").equals(String.valueOf(v.getId()))) {
+													vehicleSelect="selected";
+												} 
+											}catch(Exception e) {
+												vehicleSelect="";
+											}
+									 
+								
+							%>
+								<option <%=vehicleSelect %> value='<%=v.getId() %>'><%=v.getRegNo()%></option>
+							<%
+								}
+							}
+							%>
+							</select>
+ 							</div>
+ 							</div>
+ 							<div>
+	 							<div>
+	 								<label> From</label>
+	 							</div>
+	 							<div>
+	 								<input name="fromDate"
+								id="fromDate" type="text" size="6" readonly="readonly"
+								class="{showOtherMonths: true, firstDay: 1, dateFormat: 'yyyy-mm-dd',
+	                                                 minDate: new Date(2008, 12 - 1, 25)}"
+								value="<%=fromDate!=null&&fromDate.trim().equals("")==false?fromDate:"" %>" />
+								 		
+	 								
+	 							</div>
+ 							</div>
+							<div  > 
+							<div >		  
+  									
+									
+									<label>To</label>
+		 								
+  							</div>
+ 							<div>
+ 																	 		
+		 							<input name="toDate" id="toDate"
+								type="text" size="6" readonly="readonly"
+								class="{showOtherMonths: true, firstDay: 1, dateFormat: 'yyyy-mm-dd',
+                                                 minDate: new Date(2008, 12 - 1, 25)}"
+								value="<%=toDate!=null&&toDate.trim().equals("")==false?toDate:"" %>" />									
+ 								</div>
+ 		
+						</div>
+						<div style="margin-top:29px;">
+							 
+							 
+							 	
+							 		<input type="submit" class="formbutton" value="Generate" />
+							</div></div>
+							 
+					
+							
+
+				</form>
+			</div> 
+	    <div id="reportDiv" >
+			<hr />
+		
+	  	<%
+	   //List<Tripshuttle> tripShuttleList=(List<Tripshuttle>)request.getAttribute("shuttleTripsDetails");
+	  	List<ShuttleTripDto> tripShuttleList=(List<ShuttleTripDto>)request.getAttribute("shuttleTripDtoList"); 
+		if(tripShuttleList!=null && tripShuttleList.size()>0) {
+			 TotalTableDecorator grandTotals = new TotalTableDecorator();
+			pageContext.getRequest().setAttribute("tableDecor", grandTotals);  
+			 
+		%>
+
+		 <display:table class="alternateColor" name="<%=tripShuttleList%>" id="row"
+			export="false" defaultsort="1" defaultorder="descending" pagesize="50">
+				<display:column property="tripDate" title="TripDate"
+				sortable="true" headerClass="sortable" />
+				
+				 <display:column  property="vehicleNo" title="Vehicle No." sortable="true" />
+				 
+								
+				<display:column property="totaldistance" title="TotalDistance"
+				sortable="true" headerClass="sortable" />
+				
+				
+			   
+		 <display:setProperty name="export.csv.filename" value="<%=fname1%>" />
+			<display:setProperty name="export.excel.filename" value="<%=fname2%>" />
+			<display:setProperty name="export.xml.filename" value="<%=fname3%>" /> 
+		</display:table>
+<% } else { 
+			System.out.println(" tripShuttle list is null ");
+		} 
+		%>	</div>
+<%@include file="Footer.jsp"%>	
+</div>
+	</div>
+</body>
+</html>
+             

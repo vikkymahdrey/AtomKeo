@@ -1,0 +1,682 @@
+package com.agiledge.atom.dao.impl;
+
+import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.Query;
+
+import org.apache.log4j.Logger;
+import org.json.simple.JSONObject;
+import org.springframework.stereotype.Repository;
+
+import com.agiledge.atom.config.files.OtherFunctions;
+import com.agiledge.atom.dao.intfc.DeviceDao;
+import com.agiledge.atom.entities.Driver;
+import com.agiledge.atom.entities.DriverLogin;
+import com.agiledge.atom.entities.Escort;
+import com.agiledge.atom.entities.Shuttleposition;
+import com.agiledge.atom.entities.TripDetail;
+import com.agiledge.atom.entities.TripDetailsChild;
+import com.agiledge.atom.entities.Tripshuttle;
+import com.agiledge.atom.entities.VehiclePosition;
+import com.agiledge.atom.entities.VendorTripSheet;
+import com.agiledge.atom.entities.VendorTripSheetParent;
+
+@Repository("deviceDao")
+public class DeviceDaoImpl extends AbstractDao implements DeviceDao {
+	private static final Logger logger = Logger.getLogger(DeviceDaoImpl.class);
+
+	public JSONObject checkpassword(JSONObject json) {
+		JSONObject returnobj = new JSONObject();
+		try {
+			Query q = getEntityManager().createQuery(
+					"from Escort e where e.escortClock=:password");
+			logger.debug("MObile Security password"
+					+ json.get("password").toString());
+			q.setParameter("password", json.get("password").toString());
+			if (q.getResultList().size() == 1) {
+				Escort e = (Escort) q.getResultList().get(0);
+				Tripshuttle ts = new Tripshuttle();
+				ts.setEscort(e);
+				ts.setImei(json.get("IMEI").toString());
+				ts.setStatus("started");
+				ts.setTotaldistance("0");
+				Tripshuttle rts = (Tripshuttle) update(ts);
+				returnobj.put("ACTION", "START_TRIP");
+				returnobj.put("RESULT", "TRUE");
+				returnobj.put("MESSAGE", "SUCCESS");
+				returnobj.put("TRIP_ID", rts.getId());
+			} else {
+				returnobj.put("ACTION", "START_TRIP");
+				returnobj.put("RESULT", "FALSE");
+				returnobj.put("MESSAGE", "ESCORT NOT FOUND!");
+			}
+			flush();
+		} catch (Exception e) {
+			returnobj.put("RESULT", "FALSE");
+			returnobj.put("MESSAGE", e);
+		}
+		logger.debug("Statussss" + returnobj.get("RESULT").toString());
+		return returnobj;
+	}
+
+	public JSONObject stoptrip(JSONObject json) {
+		JSONObject returnobj = new JSONObject();
+		try {
+			Query q = getEntityManager().createQuery(
+					"from Escort e where e.escortClock=:password");
+			q.setParameter("password", json.get("password").toString());
+			if (q.getResultList().size() == 1) {
+				Tripshuttle ts = getEntityManager().find(Tripshuttle.class,
+						Integer.parseInt(json.get("TRIP_ID").toString()));
+				ts.setStatus("stopped");
+				ts.setTripendtime(new Timestamp(new Date().getTime()));
+				ts.setTotaldistance(json.get("TOTAL_DISTANCE").toString());
+				update(ts);
+				returnobj.put("RESULT", "TRUE");
+				returnobj.put("MESSAGE", "SUCCESS");
+				returnobj.put("ACTION", "STOP_TRIP");
+			} else {
+				returnobj.put("ACTION", "STOP_TRIP");
+				returnobj.put("RESULT", "FALSE");
+				returnobj.put("MESSAGE", "ESCORT NOT FOUND!");
+			}
+			flush();
+		} catch (Exception e) {
+			returnobj.put("RESULT", "FALSE");
+			returnobj.put("MESSAGE", e);
+		}
+		return returnobj;
+	}
+
+	public JSONObject inserttrackingdata(JSONObject json) {
+		JSONObject returnobj = new JSONObject();
+		try {
+			Shuttleposition sp = new Shuttleposition();
+			sp.setDatetime(new Timestamp(new Date().getTime()));
+			sp.setDistance(json.get("DISTANCE").toString());
+			sp.setLat(json.get("LAT").toString());
+			sp.setLng(json.get("LNG").toString());
+			sp.setTripshuttle(getEntityManager().find(Tripshuttle.class,
+					Integer.parseInt(json.get("TRIP_ID").toString())));
+			sp.setStatus("run");
+			update(sp);
+			flush();
+			returnobj.put("ACTION", "VEHICLE_TRACKING");
+			returnobj.put("RESULT", "TRUE");
+			returnobj.put("MESSAGE", "SUCCESS");
+		} catch (Exception e) {
+			returnobj.put("RESULT", "FALSE");
+			returnobj.put("MESSAGE", e);
+			returnobj.put("ACTION", "VEHICLE_TRACKING");
+		}
+		return returnobj;
+	}
+
+	public int startTrip(String tripId, String imei) {
+
+		int retrival = 0;
+		try {
+			TripDetail t = getEntityManager().find(TripDetail.class, tripId);
+			if (t.getVendorTripSheetParents().size() > 0) {
+				VendorTripSheetParent vt = (VendorTripSheetParent) t
+						.getVendorTripSheetParents().get(0);
+				if (vt.getStatus() == null
+						|| !vt.getStatus().equalsIgnoreCase("stopped")) {
+					vt.setStatus("started");
+					vt.setDownloadStatus("downloaded");
+					vt.setOnTimeStatus("on time");
+					vt.setVehicleImei(imei);
+					Calendar calendar = Calendar.getInstance();
+					vt.setStartTime(calendar.get(Calendar.HOUR_OF_DAY) + ":"
+							+ calendar.get(Calendar.MINUTE) + ":"
+							+ calendar.get(Calendar.SECOND));
+					vt.setLogTime(calendar.get(Calendar.HOUR_OF_DAY) + ":"
+							+ calendar.get(Calendar.MINUTE) + ":"
+							+ calendar.get(Calendar.SECOND));
+
+					VendorTripSheetParent vtsp = (VendorTripSheetParent) update(vt);
+					if (vtsp != null) {
+						retrival = 1;
+					}
+				}
+			} else {
+				VendorTripSheetParent vt = new VendorTripSheetParent();
+				vt.setTripDetail(t);
+				vt.setStatus("started");
+				vt.setDownloadStatus("downloaded");
+				vt.setEscort("NO");
+				vt.setVehicleImei(imei);
+				vt.setOnTimeStatus("on time");
+				Calendar calendar = Calendar.getInstance();
+				vt.setStartTime(calendar.get(Calendar.HOUR_OF_DAY) + ":"
+						+ calendar.get(Calendar.MINUTE) + ":"
+						+ calendar.get(Calendar.SECOND));
+				vt.setLogTime(calendar.get(Calendar.HOUR_OF_DAY) + ":"
+						+ calendar.get(Calendar.MINUTE) + ":"
+						+ calendar.get(Calendar.SECOND));
+				update(vt);
+				List<TripDetailsChild> list = t.getTripDetailsChilds();
+				VendorTripSheet vtp = null;
+				for (TripDetailsChild tc : list) {
+
+					System.out.println("here");
+					VendorTripSheet v = new VendorTripSheet();
+					v.setTripDetail(t);
+					v.setEmployee(tc.getEmployee());
+					v.setShowStatus("No Show");
+					v.setInsertedOrder(BigInteger.valueOf(Long.parseLong(""
+							+ tc.getRoutedOrder())));
+					int randomPIN = (int) (Math.random() * 9000) + 1000;
+					v.setKeypin("" + randomPIN);
+					vtp = (VendorTripSheet) update(v);
+				}
+				if (vtp != null) {
+					retrival = 1;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return retrival;
+	}
+
+	public int stopTrip(String tripId) {
+
+		int retrival = 0;
+		try {
+			Calendar calendar = Calendar.getInstance();
+			TripDetail t = getEntityManager().find(TripDetail.class, tripId);
+
+			if (t.getVendorTripSheets().size() > 0
+					&& t.getTripLog().equalsIgnoreCase("IN")) {
+
+				List<VendorTripSheet> list = t.getVendorTripSheets();
+				for (VendorTripSheet vts : list) {
+					if (vts.getShowStatus().equalsIgnoreCase("show")) {
+						vts.setCurStatus("OUT");
+						vts.setOutTime(calendar.get(Calendar.HOUR_OF_DAY) + ":"
+								+ calendar.get(Calendar.MINUTE) + ":"
+								+ calendar.get(Calendar.SECOND));
+						update(vts);
+					}
+				}
+			}
+
+			VendorTripSheetParent vt = (VendorTripSheetParent) t
+					.getVendorTripSheetParents().get(0);
+			vt.setStatus("stopped");
+			vt.setDownloadStatus("downloaded");
+			vt.setOnTimeStatus("on time");
+			vt.setStopTime(calendar.get(Calendar.HOUR_OF_DAY) + ":"
+					+ calendar.get(Calendar.MINUTE) + ":"
+					+ calendar.get(Calendar.SECOND));
+			vt.setLogTime(calendar.get(Calendar.HOUR_OF_DAY) + ":"
+					+ calendar.get(Calendar.MINUTE) + ":"
+					+ calendar.get(Calendar.SECOND));
+
+			VendorTripSheetParent vtsp = (VendorTripSheetParent) update(vt);
+
+			if (vtsp != null) {
+				retrival = 1;
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return retrival;
+
+	}
+
+	public int forceStopTrip(String tripId) {
+
+		int retrival = 0;
+		try {
+			Calendar calendar = Calendar.getInstance();
+			TripDetail t = getEntityManager().find(TripDetail.class, tripId);
+
+			if (t.getVendorTripSheets().size() > 0
+					&& t.getTripLog().equalsIgnoreCase("IN")) {
+
+				List<VendorTripSheet> list = t.getVendorTripSheets();
+				for (VendorTripSheet vts : list) {
+					if (vts.getShowStatus().equalsIgnoreCase("show")) {
+						vts.setCurStatus("OUT");
+						vts.setOutTime(calendar.get(Calendar.HOUR_OF_DAY) + ":"
+								+ calendar.get(Calendar.MINUTE) + ":"
+								+ calendar.get(Calendar.SECOND));
+						update(vts);
+					}
+				}
+			}
+
+			VendorTripSheetParent vt = (VendorTripSheetParent) t
+					.getVendorTripSheetParents().get(0);
+			vt.setStatus("stopped");
+			vt.setDownloadStatus("downloaded");
+			vt.setOnTimeStatus("on time");
+			vt.setStopTime(calendar.get(Calendar.HOUR_OF_DAY) + ":"
+					+ calendar.get(Calendar.MINUTE) + ":"
+					+ calendar.get(Calendar.SECOND));
+			vt.setLogTime(calendar.get(Calendar.HOUR_OF_DAY) + ":"
+					+ calendar.get(Calendar.MINUTE) + ":"
+					+ calendar.get(Calendar.SECOND));
+
+			VendorTripSheetParent vtsp = (VendorTripSheetParent) update(vt);
+
+			if (vtsp != null) {
+				retrival = 1;
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return retrival;
+
+	}
+
+	public int employeeCheckIn(String tripId, String empCode, double latitude,
+			double longitude, long nuance) {
+
+		int retrival = 0;
+		try {
+			String time = OtherFunctions.changeDateFormat(new Date(nuance),
+					"HH:mm:ss");
+
+			TripDetail t = getEntityManager().find(TripDetail.class, tripId);
+
+			VendorTripSheet vt = null;
+			if (t.getVendorTripSheets().size() > 0) {
+
+				if (t.getTripLog().equalsIgnoreCase("IN")) {
+					List<VendorTripSheet> list = t.getVendorTripSheets();
+					for (VendorTripSheet vts : list) {
+						if (vts.getEmployee().getId()
+								.equalsIgnoreCase(empCode)) {
+							vts.setShowStatus("Show");
+							vts.setCurStatus("IN");
+							vts.setLatitude(latitude);
+							vts.setLongitude(longitude);
+							vts.setInTime(time);
+							vt = (VendorTripSheet) update(vts);flush();
+						}
+					}
+				}
+
+				else {
+
+					List<VendorTripSheet> list = t.getVendorTripSheets();
+					for (VendorTripSheet vts : list) {
+						if (vts.getEmployee().getId()
+								.equalsIgnoreCase(empCode)) {
+							vts.setShowStatus("Show");
+							vts.setCurStatus("IN");
+							vts.setInTime(time);
+							vt = (VendorTripSheet) update(vts);flush();
+						}
+
+					}
+				}
+
+				if (vt != null) {
+					retrival = 1;
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return retrival;
+
+	}
+
+	public int employeeCheckOut(String tripId, String empCode, double latitude,
+			double longitude, long nuance) {
+
+		int retrival = 0;
+		try {
+			String time = OtherFunctions.changeDateFormat(new Date(nuance),
+					"HH:mm:ss");
+
+			TripDetail t = getEntityManager().find(TripDetail.class, tripId);
+
+			VendorTripSheet vt = null;
+			if (t.getVendorTripSheets().size() > 0) {
+
+				if (t.getTripLog().equalsIgnoreCase("OUT")) {
+					List<VendorTripSheet> list = t.getVendorTripSheets();
+					for (VendorTripSheet vts : list) {
+						if (vts.getEmployee().getId()
+								.equalsIgnoreCase(empCode)) {
+							vts.setShowStatus("Show");
+							vts.setCurStatus("OUT");
+							vts.setLatitude(latitude);
+							vts.setLongitude(longitude);
+							vts.setOutTime(time);
+							vt = (VendorTripSheet) update(vts);
+						}
+					}
+				}
+
+				else {
+
+					List<VendorTripSheet> list = t.getVendorTripSheets();
+					for (VendorTripSheet vts : list) {
+						if (vts.getEmployee().getId()
+								.equalsIgnoreCase(empCode)) {
+							vts.setShowStatus("Show");
+							vts.setCurStatus("OUT");
+							vts.setOutTime(time);
+							vt = (VendorTripSheet) update(vts);
+						}
+
+					}
+				}
+
+				if (vt != null) {
+					retrival = 1;
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return retrival;
+	}
+
+	public int updateGeoCode(String imei, String tripId, double latitude,
+			double longitude, long nuance) {
+		int retVal = 0;
+		try {
+
+			TripDetail t = getEntityManager().find(TripDetail.class, tripId);
+
+			VehiclePosition vpret=null;
+			if(t.getVehiclePositions()!=null )
+					{
+				VehiclePosition vp = new VehiclePosition();
+
+				vp.setVehicle(t.getVehicleBean());
+				vp.setLattitude(latitude);
+				vp.setLongitude(longitude);
+				vp.setLogstatus("run");
+				vp.setTripDetail(t);
+				vp.setStatus("checkedin");
+				vp.setDateTime(new java.sql.Timestamp(nuance));
+
+				vpret = (VehiclePosition) update(vp);
+				
+					}
+			
+			
+			else{ 
+
+			String vehicleStatus = t.getVehiclePositions().get(t.getVehiclePositions().size()- 1).getLogstatus();
+			VehiclePosition vp = new VehiclePosition();
+
+			vp.setVehicle(t.getVehicleBean());
+			vp.setLattitude(latitude);
+			vp.setLongitude(longitude);
+			if (vehicleStatus != null && vehicleStatus.equals("danger")) {
+				vp.setLogstatus("danger");
+			} else {
+				vp.setLogstatus("run");
+			}
+			vp.setTripDetail(t);
+			vp.setStatus("checkedin");
+			vp.setDateTime(new java.sql.Timestamp(nuance));
+
+			 vpret = (VehiclePosition) update(vp);
+			}
+			if (vpret != null) {
+				retVal = 1;
+			}
+
+			List<VendorTripSheet> list = t.getVendorTripSheets();
+			for (VendorTripSheet vts : list) {
+
+				if (vts.getLatitude() == 0 || vts.getLongitude() == 0) {
+					vts.setLatitude(latitude);
+					vts.setLongitude(longitude);
+					update(vts);
+				}
+			}
+			/*List<VendorTripSheetEscort> list1 = t.getVendorTripSheetEscorts();
+			for (VendorTripSheetEscort vte : list1) {
+				if (vte.getInLatitude() == 0 || vte.getInLongitude() == 0) {
+					vte.setInLatitude(latitude);
+					vte.setInLongitude(longitude);
+					update(vte);
+				}
+			}*/
+		} catch (Exception e) {
+			logger.debug("error in update geocode dao" + e);
+
+		}
+		return retVal;
+	}
+
+	public int updateDistanceCovered(String tripId, double distanceCovered,
+			long timeElapsed) {
+
+		int retVal = 0;
+
+		try {
+
+			TripDetail t = getEntityManager().find(TripDetail.class, tripId);
+			VendorTripSheetParent vtp = (VendorTripSheetParent) t
+					.getVendorTripSheetParents().get(0);
+
+			vtp.setDistanceCovered(distanceCovered);
+			;
+			vtp.setTimeElapsed(BigInteger.valueOf(timeElapsed));
+			VendorTripSheetParent retvt = (VendorTripSheetParent) update(vtp);
+
+			if (retvt != null) {
+
+				retVal = 1;
+			}
+
+		} catch (Exception e) {
+			System.out.println("Error in dao emp get out" + e);
+		}
+
+		return retVal;
+
+	}
+
+	public int logout(String imei) {
+		int retval = 0;
+		try {
+			Query q=getEntityManager().createQuery("from DriverLogin dl where dl.imeiNumber=:imei");
+			q.setParameter("imei",imei);
+			List<DriverLogin> list=q.getResultList();
+			
+			if(list.size()>0){
+				for(DriverLogin dl :list){
+				dl.setStatus("logout");
+				DriverLogin dlret = (DriverLogin) update(dl);
+				if (dlret != null) {
+					retval = 1;
+				}
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return retval;
+	}
+
+		
+	public int checkUserOTP(String password, String imei) {
+	
+		int dId=0;
+		DriverLogin dl=null;
+		try {		
+			
+			
+			TripDetail td=getTripDetailByPwd(password);
+			if(td!=null){
+			Driver d=td.getDriver();
+			
+			
+			
+			Date dt=new Date();
+			
+			
+			
+			dl=new DriverLogin();
+			
+			dl.setDriver(d);
+			dl.setImeiNumber(imei);
+			dl.setVehicle(td.getVehicleBean());
+			dl.setStatus("logged");
+			dl.setDatetime(new Timestamp(dt.getTime()));
+			dl.setTripDetail(td);
+			update(dl);
+			dId=dl.getDriver().getId();
+			}
+				
+			 
+		} catch (Exception e) {
+			System.out.println("error : " + e);
+		} 
+		return dId;		
+		
+	}
+
+	
+public TripDetail getTripDetailByPwd(String password) {
+	
+	Calendar cal1 = Calendar.getInstance();
+			Calendar cal2 = Calendar.getInstance();		  
+	cal1.add(Calendar.DATE, -3);
+	cal2.add(Calendar.DATE, 3);
+	
+	
+	
+	Query q=getEntityManager().createQuery("from TripDetail td where td.driverPswd=:password and td.tripDate between :tripDate1 and :tripDate2 ");
+	q.setParameter("password", password);
+	q.setParameter("tripDate1",new Timestamp(cal1.getTimeInMillis()));
+	q.setParameter("tripDate2", new Timestamp(cal2.getTimeInMillis()));
+	
+	List<TripDetail> list = q.getResultList();
+	TripDetail td =null;
+	if(list.size()>0){
+		td=	list.get(0); 	
+	}
+	return td;
+	}
+
+public TripDetail getTripByDriverImei(String imei) {
+	// TODO Auto-generated method stub
+	Query q=getEntityManager().createQuery("from DriverLogin dl where dl.imeiNumber = :imei");
+	q.setParameter("imei", imei);
+	List<DriverLogin> list =q.getResultList();
+	DriverLogin dl=null;
+	if(list.size()>0){
+		for(DriverLogin dle : list){
+			if(dle.getStatus().equalsIgnoreCase("logged")){
+				dl=dle;
+			}
+		}
+	}
+	TripDetail td= dl.getTripDetail();
+	return td;
+}
+
+public int setTripAsDownloaded(String tripid, String imei, String vehicleRegNo) {
+	// TODO Auto-generated method stub
+	System.out.println("trip id : " + tripid);
+	TripDetail td= getEntityManager().find(TripDetail.class, tripid);
+	VendorTripSheetParent vtsp =td.getVendorTripSheetParents().get(0);
+	VendorTripSheetParent  retvtsp=null;
+	int retVal = 0;
+	if(vtsp!=null){
+		//"update vendor_trip_sheet_parent set downloadStatus='downloaded', vehicle_imei='"+imei+"', vehicleNo='"+vehicleNo+"' whe
+		if(td.getStatus()==null || !td.getStatus().equalsIgnoreCase("started") || !td.getStatus().equalsIgnoreCase("stopped")){
+			vtsp.setDownloadStatus("downloaded");
+			vtsp.setVehicleImei(imei);
+			vtsp.setVehicleNo(vehicleRegNo);
+              retvtsp=(VendorTripSheetParent) update(vtsp);
+              if(retvtsp!=null){
+            	  System.out.println("Updated Status as downloaded");
+              }
+		}
+	}else{
+		System.out.println("Trackkkkkk......... inserting into vendor_trip_sheet_parent");
+		VendorTripSheetParent vtspnew = new VendorTripSheetParent();
+		vtspnew.setTripDetail(td);
+		vtspnew.setVehicleImei(imei);
+		vtspnew.setDownloadStatus("downloaded");
+		vtspnew.setEscort(td.getSecurityStatus());
+		vtspnew.setVehicleNo(vehicleRegNo);
+		vtspnew.setStatus("initial");
+		retvtsp=(VendorTripSheetParent) update(vtspnew);
+		
+		List<TripDetailsChild> list = td.getTripDetailsChilds();
+		VendorTripSheet vtp = null;
+		for (TripDetailsChild tc : list) {
+
+			System.out.println("here");
+			VendorTripSheet v = new VendorTripSheet();
+			v.setTripDetail(td);
+			v.setEmployee(tc.getEmployee());
+			v.setShowStatus("No Show");
+			v.setInsertedOrder(BigInteger.valueOf(Long.parseLong(""
+					+ tc.getRoutedOrder())));
+			int randomPIN = (int) (Math.random() * 9000) + 1000;
+			v.setKeypin("" + randomPIN);
+			vtp = (VendorTripSheet) update(v);
+		}
+		}
+	
+	if(retvtsp != null)
+	{retVal=1;};
+	return retVal;
+}
+
+
+
+
+
+
+	
+	
+	/*
+	 * public int updateGeoCodePassive(String imei, double latitude, double
+	 * longitude, long nuance) { int retVal = 0; try {
+	 * 
+	 * Device d=getEntityManager().find(Device.class, imei);
+	 * 
+	 * 
+	 * 
+	 * pst = con .prepareStatement(
+	 * "update full_vehicle_position,device_vehicle dv, device d  set full_vehicle_position.date_time=?, full_vehicle_position.lattitude=?, full_vehicle_position.longitude=?    where full_vehicle_position.dvId=dv.id and  dv.status='active' and dv.deviceId=d.id and  d.imei='"
+	 * +imei+"' ");
+	 * 
+	 * 
+	 * 
+	 * //System.out.println("Time (stationary) :" +new
+	 * java.sql.Timestamp(nuance).toGMTString()); pst.setTimestamp(1,new
+	 * java.sql.Timestamp( nuance));
+	 * 
+	 * pst.setDouble(2, latitude); pst.setDouble(3, longitude);
+	 * 
+	 * 
+	 * 
+	 * } catch (Exception e) { logger.debug("error in update geocode dao" + e);
+	 * 
+	 * } return retVal; }
+	 */
+
+}

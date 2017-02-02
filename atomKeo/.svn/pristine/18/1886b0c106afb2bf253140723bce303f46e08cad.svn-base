@@ -1,0 +1,59 @@
+package com.agiledge.atom.service.intfc;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import org.json.simple.JSONObject;
+
+import com.agiledge.atom.dto.ModifyTripDto;
+import com.agiledge.atom.dto.TripDetailsChildDto;
+import com.agiledge.atom.dto.TripDetailsDto;
+import com.agiledge.atom.dto.VehicleTypeDto;
+import com.agiledge.atom.entities.EmployeeSchedule;
+import com.agiledge.atom.entities.TripDetail;
+
+public interface TripDetailsService {
+	String routingSummaryHTMLTable(int siteid, String tripDate,String tripLog, String tripTime,
+	ArrayList<VehicleTypeDto> vehicleTypeGiven,int statusForDisplyStyleofVehicleCount) throws Exception;
+	ArrayList<TripDetailsDto> getRoutingSummary(int siteId, String tripDate, String tripLog, String tripTime) throws Exception;
+	ArrayList<TripDetailsDto> getTripSheetModified(String tripDate, String tripMode,	String siteId, String tripTime) throws Exception;
+	ArrayList<TripDetailsDto> getTripSheetSaved(String tripDate, String tripMode,String siteId, String tripTime)throws Exception;
+	ArrayList<TripDetailsDto> getTripSheetActual(String tripDate,String tripMode, String siteId, String tripTime) throws Exception;
+	int checkSecurity(String siteId, String tripTime) throws Exception;
+	ArrayList<TripDetailsChildDto> getTripSheetRemoved(String tripDate,	String siteId, String tripMode, String tripTime) throws Exception;
+	TripDetailsDto getTripSheetByTrip(String tripId) throws Exception;
+	void saveTrip(String tripDate, String tripMode, String siteId,String tripTime, String doneBy, String tripids) throws Exception;
+	void saveTripSheet(String tripDate, String tripMode, String siteId,String tripTime, String doneBy, String tripids) throws Exception;
+	ArrayList<TripDetailsDto> getTripToAssignVendor(String tripDate,String tripMode, String siteId, String tripTime) throws Exception;
+	TripDetail getTripsById(String trip) throws Exception;
+	
+	/*Live Tracking has started from here.....*/
+	ArrayList<TripDetailsDto> getTripsWithVehicle(String branch,String filshift, String vehno) throws Exception;
+    ArrayList<TripDetailsDto> getTripSheetSaved(String vendorId, String tripDate,String tripLog, String siteId, String tripTime) throws Exception;
+	ArrayList<TripDetailsDto> getTripSheetModified(String vendorCompany,String tripDate, String tripMode, String siteId, String tripTime) throws Exception;
+	ArrayList<TripDetailsDto> getAssignedTrip(String vendorCompany,String siteId, String tripDate, String[] tripTime, String tripMode,String src) throws Exception;
+	
+	/*vehicle Allocation  from vendor site*/
+	int assaginTripVehicle(List<TripDetail> tdList) throws Exception;	
+	void updateApprovalStatus(List<TripDetail> tdList) throws Exception;
+	
+	int setTripsReadyForTracking(List<TripDetail> tdList) throws Exception;
+	JSONObject getReplayData(String fromdate,String todate,String vid);
+	JSONObject getlivetrackingdata();
+	
+	void getTripSheetInsertion(String tripDate, String tripMode,String tripTime, String empId) throws Exception;
+	List<TripDetail> getTripSheet(String tripDate, String tripMode,String tripTime, String empId) throws Exception;
+	List<TripDetail> getTripSheetSaved(String tripDate, String tripMode,String tripTime)throws Exception;
+	List<TripDetail> getActualTripSheet(String tripDate, String tripMode,String tripTime)throws Exception;
+	public List<EmployeeSchedule> getSchedulesbyDate(String status,String empid,String fromdate,String todate) throws Exception;
+	public boolean CancelSchedule(String schid) throws Exception;
+	public boolean ModifySchedule(String schid,String time,String logtype,String date) throws Exception;
+	public EmployeeSchedule getschedulebyId(String schid) throws Exception;
+	List<TripDetail> getAllTripSheetDetails(String tripDate,String tripMode, String tripTime) throws Exception;
+	int modifyTrip(LinkedHashMap<String, ArrayList<ModifyTripDto>> modifiedList,String[] tripIds, String id, String tripMode, String siteId,
+																					String tripTime, String tripDate)throws Exception;
+	int addNewtrip(ArrayList<ModifyTripDto> addList, String id,String tripMode, String siteId, String tripTime, String tripDate)throws Exception;
+	void deleteEmptyTripIds(String string)throws Exception;
+	List<TripDetail> getTripSheetSavedOrModify(String tripDate,	String tripMode, String tripTime)throws Exception;
+}

@@ -1,0 +1,9 @@
+package com.agiledge.atom.service.intfc;
+
+import java.util.ArrayList;
+
+import com.agiledge.atom.dto.TripDetailsDto;
+
+public interface TripService {
+	public ArrayList<TripDetailsDto> getStationaryVehiclePosition(String branch) throws Exception;
+}

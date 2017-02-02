@@ -1,0 +1,73 @@
+package com.agiledge.atom.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.agiledge.atom.dao.intfc.SettingsDao;
+import com.agiledge.atom.dto.SettingsDTO;
+import com.agiledge.atom.entities.Employee;
+import com.agiledge.atom.entities.EmployeeSchedule;
+import com.agiledge.atom.entities.Setting;
+import com.agiledge.atom.service.intfc.SettingsService;
+
+@Service("settingsService")
+public class SettingsServiceImpl implements SettingsService {
+
+	@Autowired
+	private SettingsDao settingsDao;
+	
+	public Setting getSettnigs() throws Exception {
+		return settingsDao.getSettings();
+	}
+
+	public SettingsDTO getSettingValue(SettingsDTO settingsDto)	throws Exception {
+		return settingsDao.getSettingValue(settingsDto);
+	}
+
+	public void forceUpdateSettings(SettingsDTO settingsDto) throws Exception {
+	 settingsDao.getSettforceUpdateSettings(settingsDto);
+		
+	}
+
+	public String getPasswordResetMessage(Employee emp) throws Exception {
+		return "Hi "
+				+emp.getDisplayname()				
+				+",<br/><br/>Your Password has been reset. To access ATOm use the below information.</br></br> "
+				+ ".<br/><br/>"
+				+"Link - <a href='"+settingsDao.getSettings().getDomainName()+"'>ATOm</a>"
+				+"<br/><br/>Login Id - "+emp.getEmailAddress()
+				+"<br/><br/>Password - "+emp.getPassword()
+				+"<br/><br/>Regards,<br/>" 
+				+ "<a href='"
+				+ settingsDao.getSettings().getDomainName()
+				+"'>"+settingsDao.getSettings().getDomainName()+"</a>\n"
+						+" Transport Team."
+						+"</a>"+"<br/>---------------<br/> <i><u>Note:</u> This is a system generated email. Please do not reply.</i>";
+	
+		
+	}
+	
+	
+
+	public String getEmployeeBookingMessage(EmployeeSchedule es) throws Exception {
+		String message = "Hi "
+				+ es.getEmployee1().getDisplayname()
+				+ "! Your cab has been Scheduled from "
+				+ es.getFromDate()
+				+ " to " +
+				es.getToDate()+ " for drop" +
+				es.getLogoutTime()
+				+".<br/> <br/>"
+				+ "<br/><br/>Please click on the provided link below to view your updated schedule.<br/>"
+				+ "<a href='"
+				+ settingsDao.getSettings().getDomainName()
+				+"'>"+settingsDao.getSettings().getDomainName()+"</a>\n"
+				+ "<br/><br/>Thanks & Regards,<br/>" 
+				+ "Transport Facility Team."
+				
+				
+				+"<br/>---------------<br/> <i><u>Note:</u> This is a system generated email. Please do not reply.</i>";
+		return message;
+	}
+	
+}

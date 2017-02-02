@@ -1,0 +1,287 @@
+<%@page import="com.agiledge.atom.config.files.*"%>
+<%@page import="com.itextpdf.text.log.SysoLogger"%>
+<%@page import="com.agiledge.atom.config.files.*"%>
+<%@page import="com.agiledge.atom.dao.intfc.OtherDao"%>
+<%@page import="com.agiledge.atom.constants.*"%>
+<%@page import="com.agiledge.atom.entities.*"%>
+<%@page import="java.util.ArrayList"%>
+<%@page import="java.util.List"%>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Siemens Home</title>
+<script type="text/javascript" src="js/jquery-latest.js"></script>
+<script>
+var i=1;
+var position;
+var lat,lng;
+var labelIndex = 0;
+var map;
+var marker;
+var markers;
+var count=0;
+var cityLat;
+var cityLon;
+var emplat=12.9538477;
+var emplong=77.3507309;
+var inlatlong1;
+function loadScript() {
+	 
+	 	cityLat = emplat;
+		cityLon = emplong;
+		try {
+			var script = document.createElement("script");
+			if((document.getElementById("homelatlong1").value)==null ||(document.getElementById("homelatlong1").value)=='null'){
+				
+			}else{
+				var homelatlong=document.getElementById("homelatlong1").value;
+				
+				cityLat = parseFloat((((homelatlong.split(", "))[0]).split("("))[1]);
+				cityLon = parseFloat((((homelatlong.split(", "))[1]).split(")"))[0]);
+			}
+			script.type = "text/javascript";
+			script.src = "https://maps.googleapis.com/maps/api/js?sensor=true&callback=initialize&libraries=places&client=gme-leptonsoftwareexport&signature=1t2jNPl7sIPdevsQdfKNrx25bko=";			
+			document.body.appendChild(script);
+		} catch (e) {
+
+			alert("ERRO" + e);
+		}
+	}
+function initialize() {
+	geocoder = new google.maps.Geocoder();
+	var myLatlng = new google.maps.LatLng(cityLat, cityLon);
+	var myOptions = {
+		zoom : 14,
+		center : myLatlng,
+		mapTypeId : google.maps.MapTypeId.ROADMAP
+	};
+	map = new google.maps.Map(document.getElementById("map"), myOptions);
+	
+	 if(emplat!='null' || emplong!='null'){
+		if(emplat!=null || emplong!=null){
+		var myLatLng12 = new google.maps.LatLng(emplat, emplong);
+		markers=[];
+		//formMarkers(marker,myLatLng12);
+		
+		if((document.getElementById("homelatlong1").value)==null ||(document.getElementById("homelatlong1").value)=='null'){
+			
+		}else{
+			placeMarker3();	
+		}
+	}
+	} 
+}
+function placeMarker() {
+	 var inlatlong=document.getElementById("latlong2").value;
+	
+	var inlong=parseFloat((inlatlong.split("#"))[1]);
+	var inlat=parseFloat((inlatlong.split("#"))[0]); 
+	 var position1=new google.maps.LatLng(inlat,inlong);
+	marker = new google.maps.Marker({
+		position : position1,
+		title:  'PICK-UP',
+		map : map,
+		//animation: google.maps.Animation.BOUNCE,
+		icon:'images/icon_3.png'
+	});
+	
+ }
+function placeMarker2(){
+	 	var outlatlong=document.getElementById("latlong1").value;
+	var outlong=parseFloat((outlatlong.split("#"))[1]);
+	var outlat=parseFloat((outlatlong.split("#"))[0]);
+		var position2=new google.maps.LatLng(outlat,outlong);
+	 	marker = new google.maps.Marker({
+			position : position2,
+			title:  'DROP',
+			map : map,
+			//animation: google.maps.Animation.BOUNCE,
+			icon:'images/icon_2.png'
+		}); 
+ 	}
+function placeMarker3(){
+ 	var homelatlong=document.getElementById("homelatlong1").value;
+var homelong=parseFloat((((homelatlong.split(", "))[1]).split(")"))[0]);
+var homelat=parseFloat((((homelatlong.split(", "))[0]).split("("))[1]);
+	var position3=new google.maps.LatLng(homelat,homelong);
+ 	marker = new google.maps.Marker({
+		position : position3,
+		title:  'HOME',
+		map : map
+		//animation: google.maps.Animation.BOUNCE,
+		//icon:'images/map_home.png'
+	}); 
+	}
+</script>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/custom_siemens.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <%
+	Employee emp = (Employee) session.getAttribute("userLoggedIn");	
+	if (emp == null) {
+		String param = request.getServletPath().substring(1) + "___"
+				+ request.getQueryString();
+		response.sendRedirect("/?page=" + param);
+	} else {
+		// empid = Long.parseLong(employeeId); 
+	}
+	String gender="Male";
+	if(emp.getGender().equalsIgnoreCase("f")){
+		gender="Female";
+	}
+	%>
+  <body onload="loadScript();">
+  		
+<div class="wrapper">
+	<div class="header-wrap">
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-12 text-right">
+					<img src="images/user_iocn_header.png" />&nbsp;Welcome  <%=emp.getEmployeeFirstName()+" "+emp.getEmployeeLastName()%>  &nbsp;&nbsp;&nbsp;<a href="logout"><img src="images/logout_icon_header.png" />&nbsp;Log Out</a>
+				</div>
+			</div>
+			
+		</div>
+	</div>
+	<input
+				type="hidden" name="homelatlong1" id="homelatlong1"
+				value="<%="("+emp.getEmpLat()+", "+emp.getEmpLong()+")"%>" />
+	<div class="main-page-container">
+		<div class="container">	
+			<div class="row">
+				<div class="col-sm-12">
+				
+				<div class="breadcrumb-wrap">
+					<a href="employeeHomeKeo"><img src="images/home.png" /></a>
+					<a href="#" class="current">My Information </a>
+					<a href="transportRequest" >Book Transport</a>
+					<a href="employeeviewtrip" >View Booking </a>
+				</div>
+				
+				<div class="content-wrap">
+				
+				<%if(session.getAttribute("status")!=null){ %>
+						<div class="row mar-top-40">
+						<div class="col-sm-12">
+							<div class="alert alert-success"><%= session.getAttribute("status")%></div>
+						</div>
+					</div>
+						<%} %>
+					<div class="row">
+						<div class="col-sm-8 page-heading mar-top-20">
+							<i class="page-heading-icon"><img src="images/user_icon.png" /></i>
+							<h5 class="text-blue text-semi-bold">My Information </h5>
+						</div>
+						<div class="col-sm-4 text-right  mar-top-20">
+							<a href="editEmployeeInfo" class="btn btn-light-blue has-icon"><i><img src="images/edit_icon.png" /></i>Edit Information</a>
+						</div>						
+					</div>
+				
+				
+					<div class="section-heading">
+						<div class="row">
+							<div class="col-sm-12">
+								Personal Information
+							</div>
+						</div>
+					</div>
+					
+					
+					<div class="push-15">
+					<div class="row">
+						<div class="col-md-2 col-sm-5 col-xs-6 mar-top-15 text-lightgrey">First Name:</div>
+						<div class="col-md-3 col-sm-7 col-xs-6 mar-top-15"><%=emp.getEmployeeFirstName()%></div>
+						
+						<div class="col-md-2 col-sm-5 col-xs-6 mar-top-15 col-md-offset-2 text-lightgrey">Last Name:</div>
+						<div class="col-md-2 col-sm-7 col-xs-6 mar-top-15"><%=emp.getEmployeeLastName()%></div>						
+					</div>
+					
+					
+					<div class="row">
+						<div class="col-md-2 col-sm-5 col-xs-6 mar-top-15 text-lightgrey">Employee Code:</div>
+						<div class="col-md-3 col-sm-7 col-xs-6 mar-top-15"><%=emp.getPersonnelNo()%></div>
+						
+						<div class="col-md-2 col-sm-5 col-xs-6 mar-top-15 col-md-offset-2 text-lightgrey">Gender:</div>
+						<div class="col-md-2 col-sm-7 col-xs-6 mar-top-15"><%=gender %></div>						
+					</div>
+					
+					
+					<div class="row">
+						<div class="col-md-2 col-sm-5 col-xs-6 mar-top-15 text-lightgrey">Email:</div>
+						<div class="col-md-3 col-sm-7 col-xs-6 mar-top-15 text-break"><%=emp.getEmailAddress()%></div>
+						
+						<div class="col-md-2 col-sm-5 col-xs-6 mar-top-15 col-md-offset-2 text-lightgrey">Mobile No:</div>
+						<div class="col-md-2 col-sm-7 col-xs-6 mar-top-15"><%=emp.getContactNumber1()%></div>						
+					</div>
+					
+					</div>
+					
+					
+					<div class="section-heading">
+						<div class="row">
+							<div class="col-sm-12">
+							Current Residence Address
+							</div>
+						</div>
+					</div>
+					
+					<div class="push-15">
+					<div class="row">
+						<div class="col-md-2 col-sm-5 col-xs-6 mar-top-15 text-lightgrey">Street Address:</div>
+						<div class="col-md-3 col-sm-7 col-xs-6 mar-top-15"><%=emp.getAddress()%></div>
+						
+						
+											
+					</div>
+					</div>
+					
+					
+					
+					<div class="profile-google-map mar-top-30">
+						<div class="row">
+							<div class="col-sm-12">
+								 <div id="map" class="google-map" style="height:480px;"></div>
+							</div>
+						</div>
+					</div>
+					
+					
+				</div>
+				
+				<div class="footer-wrap">
+					<div class="row">
+						<div class="col-sm-12 text-center">
+							 <p class="text-12">The information stored on this website is maintained in accordance with the organization's Data Privacy Policy. </span><br />Copyright © 2016 siemens
+ 
+						</div>
+					</div>
+					
+				</div>
+				
+		
+				</div>
+			</div>
+	
+		</div>
+	</div>
+</div>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+
+  </body>
+</html>

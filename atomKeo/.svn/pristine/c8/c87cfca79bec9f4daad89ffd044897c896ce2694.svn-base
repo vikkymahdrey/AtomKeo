@@ -1,0 +1,12 @@
+package com.agiledge.atom.service.intfc;
+
+import com.agiledge.atom.dto.TripDetailsDto;
+
+public interface SMSService {
+
+	void sendPasswordToDriver(String id) throws Exception;
+	void sendPasswordOfTripsToEscort(String id) throws Exception;
+	int sendPinSMS(TripDetailsDto dto) throws Exception;
+	void sendPasswordToEscort(String tripId, String password) throws Exception;
+
+}

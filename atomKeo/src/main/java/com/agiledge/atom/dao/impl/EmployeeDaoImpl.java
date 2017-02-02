@@ -1,0 +1,218 @@
+package com.agiledge.atom.dao.impl;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+
+import org.apache.log4j.Logger;
+import org.springframework.stereotype.Repository;
+
+import com.agiledge.atom.dao.intfc.EmployeeDao;
+import com.agiledge.atom.dto.EmployeeDto;
+import com.agiledge.atom.entities.Employee;
+import com.agiledge.atom.entities.EmployeeSchedule;
+import com.agiledge.atom.entities.Role;
+
+
+@Repository("employeeDao")
+public class EmployeeDaoImpl extends AbstractDao implements EmployeeDao{
+	private static final Logger logger = Logger.getLogger(EmployeeDaoImpl.class);
+	
+	public Employee getEmployeeById(String empId) throws Exception {
+		Query query = getEntityManager().createQuery("from Employee emp where emp.id =:empId");
+		query.setParameter("empId", empId);
+		List<Employee> employees = query.getResultList();
+		
+		if(employees != null && employees.size() > 0)
+			return employees.get(0);
+		else
+			throw new Exception("No data found for empId "+empId);
+	}
+
+	public Employee getEmployeeByUserName(String userName) throws Exception {
+		Query query = getEntityManager().createQuery("from Employee emp where emp.loginId =:userName");
+		query.setParameter("userName", userName);
+		List<Employee> employees = query.getResultList();
+		
+		if(employees != null && employees.size() > 0)
+			return employees.get(0);
+		else
+			throw new Exception("No data found for loginId "+userName);
+	}
+
+	public List<Employee> searchEmployees(EmployeeDto employeeDto)
+			throws Exception {
+		CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
+		CriteriaQuery<Employee> criteria = builder.createQuery(Employee.class);
+		Root<Employee> eRoot = criteria.from(Employee.class);
+				
+		List<Predicate> predicates = new ArrayList<Predicate> ();
+
+		if(employeeDto.getEmployeeID() != null && !(employeeDto.getEmployeeID().trim().isEmpty()))
+			predicates.add(builder.equal(eRoot.get("id"),employeeDto.getEmployeeID()));
+		else{
+			if(employeeDto.getEmployeeFirstName() != null && !(employeeDto.getEmployeeFirstName().trim().isEmpty()))
+				predicates.add(builder.like(eRoot.<String>get("employeeFirstName"), "%"+employeeDto.getEmployeeFirstName()+"%"));
+			if(employeeDto.getEmployeeLastName() != null && !(employeeDto.getEmployeeLastName().trim().isEmpty()))
+				predicates.add(builder.like(eRoot.<String>get("employeeLastName"), "%"+employeeDto.getEmployeeLastName()+"%"));
+		}
+		criteria.select(eRoot).where(predicates.toArray((new Predicate[]{})));
+		
+		List<Employee> employees = getEntityManager().createQuery(criteria).getResultList();
+		
+		return employees;
+
+	}
+
+	public Employee updateEmployee(Employee employee) throws Exception {
+		update(employee);
+		return employee;
+	}
+
+	public List<Employee> getEnabledExternalemployees() throws Exception {
+		
+			//String="SELECT e.*,m.displayname AS managername,at.id as projectid  FROM EMPLOYEE e LEFT JOIN employee m ON m.id = e.LineManager LEFT JOIN ATSCONNECT AT ON AT.PROJECT=E.PROJECT  WHERE e.EXTERNALUSER = 'Yes' AND e.active = 1 ORDER BY personnelNo";
+			String query="from Employee e where e.externalUser='Yes' and e.active = 1 order by personnelNo";
+				Query q=getEntityManager().createQuery(query);
+					List<Employee> empList=q.getResultList();
+			
+			return empList;
+	}
+
+	public List<Employee> getAllExternalemployees() throws Exception {
+		String query="from Employee e where e.externalUser='Yes' order by personnelNo";
+		Query q=getEntityManager().createQuery(query);
+			List<Employee> empList=q.getResultList();
+	
+	return empList;
+	}
+
+	public List<Employee> getAllExternalemployeesForKeo() throws Exception {
+		String query="from Employee";
+		Query q=getEntityManager().createQuery(query);
+			List<Employee> empList=q.getResultList();
+	
+	return empList;
+	}
+	public EmployeeDto getEmployeeAccurate(String empId) throws Exception {
+		EmployeeDto dto = new EmployeeDto();
+		String query = "select e1.id as managerid,e1.displayname as managerName,e2.id as spocId,e2.displayname as spocName, e.contactNumber1,e.Gender, e.id, e.usertype, r.id roleId, e.displayName, e.EmployeeFirstName, e.personnelNo, e.loginId, e.deptName, e.employeeLastName, e.EmailAddress,e.password,e.site,e.registerStatus,e.designationName,e.emp_lat,e.emp_long from roles r, employee e left join spoc_child sc on e.id=sc.employee_id left join spoc_parent sp on  sc.spoc_id=sp.id left join employee e2 on sp.employee_id=e2.id left join employee e1 on e.linemanager=e1.id  where e.usertype=r.usertype  and  e.id=?";
+		Query q=getEntityManager().createNativeQuery(query);
+		q.setParameter(1, empId);
+		List<Object[]> oList=q.getResultList();
+			for(Object[] o: oList){
+				dto.setLineManager(String.valueOf(o[0]));
+				dto.setManagerName(String.valueOf(o[1]));
+				dto.setSpoc_id(String.valueOf(o[2]));
+				dto.setSpocName(String.valueOf(o[3]));
+				dto.setContactNo(String.valueOf(o[4]));
+				dto.setGender(String.valueOf(o[5]));
+				dto.setEmployeeID(String.valueOf(o[6]));
+				dto.setUserType(String.valueOf(o[7]));
+				dto.setRoleId(((Integer)o[8]).intValue());
+				dto.setDisplayName(String.valueOf(o[9]));
+				dto.setEmployeeFirstName(String.valueOf(o[10]));
+				dto.setPersonnelNo(String.valueOf(o[11]));
+				dto.setLoginId(String.valueOf(o[12]));
+				dto.setDeptName(String.valueOf(o[13]));
+				dto.setEmployeeLastName(String.valueOf(o[14]));
+				dto.setEmailAddress(String.valueOf(o[15]));
+				dto.setPassword(String.valueOf(o[16]));
+				dto.setSite(String.valueOf(o[17]));				
+				dto.setRegisterStatus(String.valueOf(o[18]));				
+				dto.setDesignationName(String.valueOf(o[19]));
+				dto.setEmplat(String.valueOf(o[20]));				
+				dto.setEmplong(String.valueOf(o[21]));
+				
+				logger.debug("CONTACT NUMBER 1 : " + dto.getContactNo());
+			}
+		
+		return dto;
+	}
+
+	public Employee changePassword(Employee emp) {
+		update(emp);
+			flush();
+		return emp;
+	}
+
+	public Role getRoleNamebyId(int roleId) throws Exception {
+		Query query = getEntityManager().createQuery("from Role r where r.id =:roleId");
+		query.setParameter("roleId", roleId);
+		List<Role> roleList = query.getResultList();
+			return roleList.get(0);
+	}
+
+	public Employee registerEmployee(Employee employee) throws Exception {
+		update(employee);
+		flush();
+		return employee;
+	}
+
+	public Employee UpdatePassword(Employee emp) throws Exception {
+		update(emp);
+		flush();
+		return emp;
+	}
+
+	public List<Employee> getEmployeebyIdName(String id,String name) throws Exception{
+		String query="from Employee e where e.displayname like :searchkey or e.employeeFirstName like :searchkey or e.employeeLastName like :searchkey or e.personnelNo like :idsearchkey";	
+		List<Employee> list=new ArrayList<Employee>();
+		if(id==null||id.equalsIgnoreCase("")){
+			query="from Employee e where e.displayname like :searchkey or e.employeeFirstName like :searchkey or e.employeeLastName like :searchkey";
+			Query q=getEntityManager().createQuery(query);
+			q.setParameter("searchkey", "%"+name+"%");
+			list=q.getResultList();
+			
+		}
+		else if(name==null||name.equalsIgnoreCase("")){
+			query="from Employee e where e.personnelNo like :idsearchkey";
+			Query q=getEntityManager().createQuery(query);
+			q.setParameter("idsearchkey", "%"+id+"%");
+			list=q.getResultList();
+		}
+		else{
+			query="from Employee e where e.displayname like :searchkey or e.employeeFirstName like :searchkey or e.employeeLastName like :searchkey or e.personnelNo like :idsearchkey";
+			Query q=getEntityManager().createQuery(query);
+			q.setParameter("searchkey", "%"+name+"%");
+			q.setParameter("idsearchkey", "%"+id+"%");
+			list=q.getResultList();
+		
+		}
+		
+		
+		return list;
+	}
+	public Employee employeeDao(Employee emp) throws Exception {
+		update(emp);
+		flush();
+		return emp;
+	}
+
+	public Employee getEmployeeByEmail(String email) throws Exception {
+		String query="from Employee e where e.emailAddress=:email";
+			Query q=getEntityManager().createQuery(query);
+				q.setParameter("email", email);
+					List<Employee> empList=q.getResultList();
+					if(empList!=null &&empList.size()>0){
+						return empList.get(0);	
+					}else{
+						return null;
+					}
+					
+			
+	}
+
+	
+
+	
+
+	
+
+}

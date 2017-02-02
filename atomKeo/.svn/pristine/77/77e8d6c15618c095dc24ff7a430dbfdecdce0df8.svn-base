@@ -1,0 +1,8 @@
+Hi ${empDispName},
+Congratulations! Your request for the shift transport facility has been placed successfully from ${subscriptionDate}.
+<br/><br/>For any change or for queries, call transport help desk at ${transportTeamNum} or mail us at ${transportTeamEmail}
+ <br/><br/> The facility will be made available to you when you are scheduled to a specified shift by your reporting officer/SPOC.
+ <br/> <br/>Thanks & Regards,
+ <br/>Transport Facility Team<br/>
+ <a href='${domainName}'>${domainName}</a>
+ <br/>---------------<br/> <i><u>Note:</u> This is a system generated email. Please do not reply.</i>

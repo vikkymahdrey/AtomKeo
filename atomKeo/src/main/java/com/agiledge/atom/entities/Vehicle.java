@@ -1,0 +1,296 @@
+package com.agiledge.atom.entities;
+
+import java.io.Serializable;
+import java.util.List;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+
+
+/**
+ * The persistent class for the vehicles database table.
+ * 
+ */
+@Entity
+@Table(name="vehicles")
+@NamedQuery(name="Vehicle.findAll", query="SELECT v FROM Vehicle v")
+public class Vehicle implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	@GeneratedValue(strategy=GenerationType.AUTO)
+	private int id;
+
+	private String regNo;
+
+	private String status;
+		
+	@Column(name="vehicle_imei")
+	private String vehicleimei;
+
+	
+
+	//bi-directional many-to-one association to DeviceVehicle
+	@OneToMany(mappedBy="vehicle")
+	private List<DeviceVehicle> deviceVehicles;
+
+	//bi-directional many-to-one association to DriverLogin
+	@OneToMany(mappedBy="vehicle")
+	private List<DriverLogin> driverLogins;
+
+	//bi-directional many-to-one association to DriverVehicle
+	@OneToMany(mappedBy="vehicle")
+	private List<DriverVehicle> driverVehicles;
+
+	//bi-directional many-to-one association to TransportationInEmergency
+	@OneToMany(mappedBy="vehicleBean")
+	private List<TransportationInEmergency> transportationInEmergencies;
+
+	//bi-directional many-to-one association to TripDetail
+	@OneToMany(mappedBy="vehicleBean")
+	private List<TripDetail> tripDetails;
+
+	//bi-directional many-to-one association to TripDetailsParentModified
+	@OneToMany(mappedBy="vehicleBean")
+	private List<TripDetailsParentModified> tripDetailsParentModifieds;
+
+	//bi-directional many-to-one association to VehiclePosition
+	@OneToMany(mappedBy="vehicle")
+	private List<VehiclePosition> vehiclePositions;
+
+	//bi-directional many-to-one association to VehiclePositionTemp
+	@OneToMany(mappedBy="vehicle")
+	private List<VehiclePositionTemp> vehiclePositionTemps;
+
+	//bi-directional many-to-one association to VehicleType
+	@ManyToOne(fetch=FetchType.LAZY)
+	@JoinColumn(name="vehicletype")
+	private VehicleType vehicleType;
+
+	//bi-directional many-to-one association to Vendormaster
+	@ManyToOne(fetch=FetchType.LAZY)
+	@JoinColumn(name="vendor")
+	private Vendormaster vendormaster;
+
+	public Vehicle() {
+	}
+
+	public int getId() {
+		return this.id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getRegNo() {
+		return this.regNo;
+	}
+
+	public void setRegNo(String regNo) {
+		this.regNo = regNo;
+	}
+
+	public String getStatus() {
+		return this.status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+	
+	
+	public String getVehicleImei() {
+		return this.vehicleimei;
+	}
+
+	public void setVehicleImei(String vehicleImei) {
+		this.vehicleimei = vehicleImei;
+	}
+
+	public void setDeviceVehicles(List<DeviceVehicle> deviceVehicles) {
+		this.deviceVehicles = deviceVehicles;
+	}
+
+	
+	public List<DriverLogin> getDriverLogins() {
+		return this.driverLogins;
+	}
+
+	public void setDriverLogins(List<DriverLogin> driverLogins) {
+		this.driverLogins = driverLogins;
+	}
+
+	public DriverLogin addDriverLogin(DriverLogin driverLogin) {
+		getDriverLogins().add(driverLogin);
+		driverLogin.setVehicle(this);
+
+		return driverLogin;
+	}
+
+	public DriverLogin removeDriverLogin(DriverLogin driverLogin) {
+		getDriverLogins().remove(driverLogin);
+		driverLogin.setVehicle(null);
+
+		return driverLogin;
+	}
+
+	public List<DriverVehicle> getDriverVehicles() {
+		return this.driverVehicles;
+	}
+
+	public void setDriverVehicles(List<DriverVehicle> driverVehicles) {
+		this.driverVehicles = driverVehicles;
+	}
+
+	public DriverVehicle addDriverVehicle(DriverVehicle driverVehicle) {
+		getDriverVehicles().add(driverVehicle);
+		driverVehicle.setVehicle(this);
+
+		return driverVehicle;
+	}
+
+	public DriverVehicle removeDriverVehicle(DriverVehicle driverVehicle) {
+		getDriverVehicles().remove(driverVehicle);
+		driverVehicle.setVehicle(null);
+
+		return driverVehicle;
+	}
+
+	public List<TransportationInEmergency> getTransportationInEmergencies() {
+		return this.transportationInEmergencies;
+	}
+
+	public void setTransportationInEmergencies(List<TransportationInEmergency> transportationInEmergencies) {
+		this.transportationInEmergencies = transportationInEmergencies;
+	}
+
+	public TransportationInEmergency addTransportationInEmergency(TransportationInEmergency transportationInEmergency) {
+		getTransportationInEmergencies().add(transportationInEmergency);
+		transportationInEmergency.setVehicleBean(this);
+
+		return transportationInEmergency;
+	}
+
+	public TransportationInEmergency removeTransportationInEmergency(TransportationInEmergency transportationInEmergency) {
+		getTransportationInEmergencies().remove(transportationInEmergency);
+		transportationInEmergency.setVehicleBean(null);
+
+		return transportationInEmergency;
+	}
+
+	public List<TripDetail> getTripDetails() {
+		return this.tripDetails;
+	}
+
+	public void setTripDetails(List<TripDetail> tripDetails) {
+		this.tripDetails = tripDetails;
+	}
+
+	public TripDetail addTripDetail(TripDetail tripDetail) {
+		getTripDetails().add(tripDetail);
+		tripDetail.setVehicleBean(this);
+
+		return tripDetail;
+	}
+
+	public TripDetail removeTripDetail(TripDetail tripDetail) {
+		getTripDetails().remove(tripDetail);
+		tripDetail.setVehicleBean(null);
+
+		return tripDetail;
+	}
+
+	public List<TripDetailsParentModified> getTripDetailsParentModifieds() {
+		return this.tripDetailsParentModifieds;
+	}
+
+	public void setTripDetailsParentModifieds(List<TripDetailsParentModified> tripDetailsParentModifieds) {
+		this.tripDetailsParentModifieds = tripDetailsParentModifieds;
+	}
+
+	public TripDetailsParentModified addTripDetailsParentModified(TripDetailsParentModified tripDetailsParentModified) {
+		getTripDetailsParentModifieds().add(tripDetailsParentModified);
+		tripDetailsParentModified.setVehicleBean(this);
+
+		return tripDetailsParentModified;
+	}
+
+	public TripDetailsParentModified removeTripDetailsParentModified(TripDetailsParentModified tripDetailsParentModified) {
+		getTripDetailsParentModifieds().remove(tripDetailsParentModified);
+		tripDetailsParentModified.setVehicleBean(null);
+
+		return tripDetailsParentModified;
+	}
+
+	public List<VehiclePosition> getVehiclePositions() {
+		return this.vehiclePositions;
+	}
+
+	public void setVehiclePositions(List<VehiclePosition> vehiclePositions) {
+		this.vehiclePositions = vehiclePositions;
+	}
+
+	public VehiclePosition addVehiclePosition(VehiclePosition vehiclePosition) {
+		getVehiclePositions().add(vehiclePosition);
+		vehiclePosition.setVehicle(this);
+
+		return vehiclePosition;
+	}
+
+	public VehiclePosition removeVehiclePosition(VehiclePosition vehiclePosition) {
+		getVehiclePositions().remove(vehiclePosition);
+		vehiclePosition.setVehicle(null);
+
+		return vehiclePosition;
+	}
+
+	public List<VehiclePositionTemp> getVehiclePositionTemps() {
+		return this.vehiclePositionTemps;
+	}
+
+	public void setVehiclePositionTemps(List<VehiclePositionTemp> vehiclePositionTemps) {
+		this.vehiclePositionTemps = vehiclePositionTemps;
+	}
+
+	public VehiclePositionTemp addVehiclePositionTemp(VehiclePositionTemp vehiclePositionTemp) {
+		getVehiclePositionTemps().add(vehiclePositionTemp);
+		vehiclePositionTemp.setVehicle(this);
+
+		return vehiclePositionTemp;
+	}
+
+	public VehiclePositionTemp removeVehiclePositionTemp(VehiclePositionTemp vehiclePositionTemp) {
+		getVehiclePositionTemps().remove(vehiclePositionTemp);
+		vehiclePositionTemp.setVehicle(null);
+
+		return vehiclePositionTemp;
+	}
+
+	public VehicleType getVehicleType() {
+		return this.vehicleType;
+	}
+
+	public void setVehicleType(VehicleType vehicleType) {
+		this.vehicleType = vehicleType;
+	}
+
+	public Vendormaster getVendormaster() {
+		return this.vendormaster;
+	}
+
+	public void setVendormaster(Vendormaster vendormaster) {
+		this.vendormaster = vendormaster;
+	}
+
+
+}

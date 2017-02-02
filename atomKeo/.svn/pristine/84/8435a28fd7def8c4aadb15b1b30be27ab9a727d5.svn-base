@@ -1,0 +1,51 @@
+# Root logger option
+log4j.rootLogger=DEBUG, CONSOLE, file, email
+
+# Redirect log messages to console
+log4j.appender.CONSOLE=org.apache.log4j.ConsoleAppender
+log4j.appender.CONSOLE.Target=System.out
+log4j.appender.CONSOLE.Threshold=DEBUG
+log4j.appender.CONSOLE.layout=org.apache.log4j.PatternLayout
+log4j.appender.CONSOLE.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss} %-5p %c :%L - %m%n
+
+# Rirect log messages to a log file
+<<<<<<< HEAD:CoreAtom/src/test/resources/log4j.properties
+# log4j.appender.file=org.apache.log4j.RollingFileAppender
+# log4j.appender.file.File=${catalina.home}/logs/myapp.log
+# log4j.appender.file.Threshold=DEBUG
+# log4j.appender.file.MaxFileSize=5MB
+# log4j.appender.file.MaxBackupIndex=10
+# log4j.appender.file.layout=org.apache.log4j.PatternLayout
+# log4j.appender.file.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss} %-5p %c :%L - %m%n
+=======
+log4j.appender.file=org.apache.log4j.RollingFileAppender
+log4j.appender.file.File=D:\\sivareddy\\logs\\CoreAtom.log
+log4j.appender.file.Threshold=DEBUG
+log4j.appender.file.MaxFileSize=5MB
+log4j.appender.file.MaxBackupIndex=10
+log4j.appender.file.layout=org.apache.log4j.PatternLayout
+log4j.appender.file.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss} %-5p %c :%L - %m%n
+>>>>>>> 4b76a28366d5c2875d860eaa86f3791cbd243a56:CoreAtom/src/test/resources/log4j.properties
+
+#CONFIGURE SMTP
+#log4j.appender.email=org.apache.log4j.net.SMTPAppender
+#log4j.appender.email.SMTPHost=mail.mydomain.com
+#log4j.appender.email.SMTPUsername=vikky@agiledgesolutions.com
+#log4j.appender.email.SMTPPassword=agiledge
+#log4j.appender.email.From=vikky@agiledgesolutions.com
+#log4j.appender.email.To=vikky@agiledgesolutions.com
+#log4j.appender.email.Subject=Log of messages
+#log4j.appender.email.BufferSize=1
+#log4j.appender.email.EvaluatorClass=TriggerLogEvent
+#log4j.appender.email.layout=org.apache.log4j.PatternLayout
+#log4j.appender.email.layout.ConversionPattern=%m
+
+# INFO level will be logged
+#log4j.logger.com.foo.mailer = INFO, email
+# turn off additivity
+#log4j.additivity.com.foo.mailer = false
+
+log4j.logger.org.springframework=ERROR
+log4j.logger.org.springframework.transaction=ERROR
+log4j.logger.org.hibernate=ERROR
+log4j.logger.org.displaytag=ERROR

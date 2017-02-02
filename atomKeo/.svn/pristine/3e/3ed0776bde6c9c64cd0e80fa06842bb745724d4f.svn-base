@@ -1,0 +1,99 @@
+package com.agiledge.atom.dao.impl;
+
+import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.util.Date;
+
+import javax.persistence.Query;
+
+import org.json.simple.JSONObject;
+import org.springframework.stereotype.Repository;
+
+import com.agiledge.atom.dao.intfc.DeviceDao;
+import com.agiledge.atom.entities.Escort;
+import com.agiledge.atom.entities.FullVehiclePosition;
+import com.agiledge.atom.entities.Shuttleposition;
+import com.agiledge.atom.entities.Tripshuttle;
+
+@Repository("deviceDao")
+public class DeviceDaoImpl extends AbstractDao implements DeviceDao {
+
+	public JSONObject checkpassword(JSONObject json){
+		JSONObject returnobj=new JSONObject();
+		try{
+		Query q=getEntityManager().createQuery("from Escort e where e.escortClock=:password");
+		q.setParameter("password",json.get("PASSWORD").toString());
+		if(q.getResultList().size()==1){
+			Escort e=(Escort) q.getResultList().get(0);
+			Tripshuttle ts=new Tripshuttle();
+			ts.setEscort(e);
+			ts.setImei(json.get("IMEI").toString());
+			ts.setStatus("started");
+			ts.setTotaldistance("0");
+			Tripshuttle rts=(Tripshuttle) update(ts);
+			returnobj.put("RESULT", "TRUE");
+			returnobj.put("MESSAGE", "SUCCESS");
+			returnobj.put("TRIP_ID",rts.getId());
+		}
+		else{
+			returnobj.put("RESULT", "FALSE");
+			returnobj.put("MESSAGE", "ESCORT NOT FOUND!");
+		}
+		flush();
+		}
+		catch(Exception e){
+			returnobj.put("RESULT", "FALSE");
+			returnobj.put("MESSAGE", e);
+		}
+		return returnobj;
+	}
+	
+	public JSONObject stoptrip(JSONObject json){
+		JSONObject returnobj=new JSONObject();
+		try{
+		Query q=getEntityManager().createQuery("from Escort e where e.escortClock=:password");
+		q.setParameter("password",json.get("PASSWORD").toString());
+		if(q.getResultList().size()==1){
+			Tripshuttle ts=getEntityManager().find(Tripshuttle.class, Integer.parseInt(json.get("TRIP_ID").toString()));
+			ts.setStatus("stopped");
+			ts.setTripendtime(new Timestamp(new Date().getTime()));
+			ts.setTotaldistance(json.get("TOTAL_DISTANCE").toString());
+			update(ts);
+			returnobj.put("RESULT", "TRUE");
+			returnobj.put("MESSAGE", "SUCCESS");
+		}
+		else{
+			returnobj.put("RESULT", "FALSE");
+			returnobj.put("MESSAGE", "ESCORT NOT FOUND!");
+		}
+		flush();
+		}
+		catch(Exception e){
+			returnobj.put("RESULT", "FALSE");
+			returnobj.put("MESSAGE", e);
+		}
+		return returnobj;
+	}
+	
+	public JSONObject inserttrackingdata(JSONObject json){
+		JSONObject returnobj=new JSONObject();
+		try{
+			Shuttleposition sp=new Shuttleposition();
+			sp.setDatetime(new Timestamp(new Date().getTime()));
+			sp.setDistance(json.get("DISTANCE").toString());
+			sp.setLat(json.get("LAT").toString());
+			sp.setLng(json.get("LNG").toString());
+			sp.setTripshuttle(getEntityManager().find(Tripshuttle.class, Integer.parseInt(json.get("TRIP_ID").toString())));	
+			sp.setStatus("run");
+			update(sp);
+			flush();
+			returnobj.put("RESULT", "TRUE");
+			returnobj.put("MESSAGE", "SUCCESS");
+		}catch(Exception e){
+				returnobj.put("RESULT", "FALSE");
+				returnobj.put("MESSAGE", e);
+			}
+			return returnobj;
+	}
+	
+}

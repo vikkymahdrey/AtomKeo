@@ -1,0 +1,232 @@
+package com.agiledge.atom.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.agiledge.atom.config.files.OtherFunctions;
+import com.agiledge.atom.dao.intfc.SettingsDao;
+import com.agiledge.atom.dto.SettingsDTO;
+import com.agiledge.atom.entities.Employee;
+import com.agiledge.atom.entities.EmployeeSchedule;
+import com.agiledge.atom.entities.EmployeeScheduleAlter;
+import com.agiledge.atom.entities.Setting;
+import com.agiledge.atom.entities.TripDetailsChild;
+import com.agiledge.atom.service.intfc.SettingsService;
+
+@Service("settingsService")
+public class SettingsServiceImpl implements SettingsService {
+
+	@Autowired
+	private SettingsDao settingsDao;
+	
+	public Setting getSettnigs() throws Exception {
+		return settingsDao.getSettings();
+	}
+
+	public SettingsDTO getSettingValue(SettingsDTO settingsDto)	throws Exception {
+		return settingsDao.getSettingValue(settingsDto);
+	}
+
+	public void forceUpdateSettings(SettingsDTO settingsDto) throws Exception {
+	 settingsDao.getSettforceUpdateSettings(settingsDto);
+		
+	}
+
+	public String getPasswordResetMessage(Employee emp) throws Exception {
+		return "Hi "
+				+emp.getDisplayname()				
+				+",<br/><br/>Your Password has been reset. To access ATOm use the below information.<br/><br/> "
+				+ ".<br/><br/>"
+				+"Link - <a href='"+settingsDao.getSettings().getDomainName()+"'>ATOm</a>"
+				+"<br/><br/>Login Id - "+emp.getEmailAddress()
+				+"<br/><br/>Password - "+emp.getPassword()
+				+"<br/><br/>Regards,<br/>" 
+				+ "<a href='"
+				+ settingsDao.getSettings().getDomainName()
+				+"'>"+settingsDao.getSettings().getDomainName()+"</a>\n"
+						+" Transport Team."
+						+"</a>"+"<br/>---------------<br/> <i><u>Note:</u> This is a system generated email. Please do not reply.</i>";
+	
+		
+	}
+	
+	
+
+	public String getEmployeeBookingMessage(EmployeeSchedule es) throws Exception {
+		String message="";
+		if(es.getFromDate().equals(es.getToDate())){		
+		 message="Dear "
+				+ es.getEmployee1().getDisplayname()
+				+",<br/> <br/>"
+				+"We have received your request for a drop at "
+				+es.getLogoutTime()
+				+" on "
+				+ OtherFunctions.changeDateFromat(es.getFromDate())
+				+".<br/> <br/>"
+				+" The home address you have provided is " 
+				+es.getEmployee1().getAddress()
+				+".<br/> <br/>"
+				+"Cab details will be shared 30 minutes before departure time."
+			    +"<br/><br/>"
+				+"In case of any changes, please update your request at least two hours before "
+				+es.getLogoutTime()
+				+" by clicking "
+				+ "<a href='"
+				+ settingsDao.getSettings().getDomainName()
+				+"'>here</a>\n"
+				+"<br/><br/>"
+				+ "With warm regards,<br/>" 
+				+"Team Admin - STS"
+				+"<br/><br/>"
+				+"Contact:<br/>"
+				+"Transport Helpline<br/>"
+				+"(080) 3313 4449<br/><br/>"
+				+"Emergency Helpline<br/>"
+				+"(080) 3313 3333<br/><br/>"
+				+"Escalation:<br/>"
+				+"Aditya Bhagat <br/>"
+				+"(+91 9886149611)"
+				+"<br/>";
+		}else{
+			message="Dear "
+					+ es.getEmployee1().getDisplayname()
+					+",<br/> <br/>"
+					+"We have received your request for a drop at "
+					+es.getLogoutTime()
+					+" from "
+					+ OtherFunctions.changeDateFromat(es.getFromDate())
+					+" to "
+					+ OtherFunctions.changeDateFromat(es.getToDate())
+					+".<br/> <br/>"
+					+" The home address you have provided is " 
+					+es.getEmployee1().getAddress()
+					+".<br/> <br/>"
+					+"Cab details will be shared 30 minutes before departure time."
+				    +"<br/><br/>"
+					+"In case of any changes, please update your request at least two hours before "
+					+es.getLogoutTime()
+					+" by clicking "
+					+ "<a href='"
+					+ settingsDao.getSettings().getDomainName()
+					+"'>here</a>\n"
+					+"<br/><br/>"
+					+ "With warm regards,<br/>" 
+					+"Team Admin - STS"
+					+"<br/><br/>"
+					+"Contact:<br/>"
+					+"Transport Helpline<br/>"
+					+"(080) 3313 4449<br/><br/>"
+					+"Emergency Helpline<br/>"
+					+"(080) 3313 3333<br/><br/>"
+					+"Escalation:<br/>"
+					+"Aditya Bhagat <br/>"
+					+"(+91 9886149611)"
+					+"<br/>";
+		}
+		
+		
+		return message;
+	}
+	
+	public String getEmployeeBookingConfirmationMsg(TripDetailsChild tdc) throws Exception {
+		String message="Dear "
+				+ tdc.getEmployee().getDisplayname()
+				+",<br/> <br/>"
+				+" Your cab is confirmed for  "
+				+OtherFunctions.changeDateFromat(tdc.getTripDetail().getTripDate())
+				+" at "
+				+tdc.getTripDetail().getTripTime()
+				+".<br/> <br/>"
+				+" The home address you have provided is " 
+				+tdc.getEmployee().getAddress()
+				+".<br/> <br/>"
+				+"<b><u>Trip Details</u></b>:"
+				+"<br/>"
+				+"Cab Registration Number: "+tdc.getTripDetail().getVehicleBean().getRegNo()
+			    +"<br/>"
+				+"Driver Name: "+tdc.getTripDetail().getDriver().getName()
+				+"<br/>"
+				+"Escort Name: "+tdc.getTripDetail().getEscort().getName()
+				+"<br/>"
+				+"Boarding point: Security office, "+tdc.getEmployee().getSiteBean().getSiteName()
+				+"<br/><br/>"
+				+"In case of any change in departure time, please inform (080) 3313 4449 at least one hour before "+tdc.getTripDetail().getTripTime()
+				+"."
+				+"<br/><br/>"
+				+ "With warm regards,<br/>" 
+				+"Team Admin - STS"
+				+"<br/><br/>"
+				+"Contact:<br/>"
+				+"Transport Helpline<br/>"
+				+"(080) 3313 4449<br/><br/>"
+				+"Emergency Helpline<br/>"
+				+"(080) 3313 3333<br/><br/>"
+				+"Escalation:<br/>"
+				+"Aditya Bhagat <br/>"
+				+"(+91 9886149611)"
+				+"<br/>";
+		
+		return message;
+	}
+	
+	
+	public String getEmployeeBookingModificationMsg(EmployeeScheduleAlter esa) throws Exception {
+		String message="Dear "
+				+ esa.getEmployeeSchedule().getEmployee1().getDisplayname()
+				+",<br/> <br/>"
+				+" Your Office to Home cab booking has been modified to  "
+				+OtherFunctions.changeDateFromat(esa.getDate())
+				+" at "
+				+esa.getLogoutTime()
+				+".<br/> <br/>"
+				+" The home address you have provided is " 
+				+esa.getEmployeeSchedule().getEmployee1().getAddress()
+				+".<br/> <br/>"
+				+"In case of any change in departure time, please inform (080) 3313 4449 at least one hour before the scheduled time."
+				+"<br/><br/>"
+				+ "With warm regards,<br/>" 
+				+"Team Admin - STS"
+				+"<br/><br/>"
+				+"Contact:<br/>"
+				+"Transport Helpline<br/>"
+				+"(080) 3313 4449<br/><br/>"
+				+"Emergency Helpline<br/>"
+				+"(080) 3313 3333<br/><br/>"
+				+"Escalation:<br/>"
+				+"Aditya Bhagat <br/>"
+				+"(+91 9886149611)"
+				+"<br/>";
+		
+		return message;
+	}
+	
+	
+	public String getEmployeeBookingCancellationMsg(EmployeeScheduleAlter esa, String logtime) throws Exception {
+		String message="Dear "
+				+ esa.getEmployeeSchedule().getEmployee1().getDisplayname()
+				+",<br/> <br/>"
+				+" Your Office to Home cab booking for "
+				+OtherFunctions.changeDateFromat(esa.getDate())
+				+" at "
+				+logtime
+				+" stands cancelled."
+				+"<br/> <br/>"
+				+"In case you have not cancelled this booking please contact (080) 3313 4449 immediately."
+				+"<br/><br/>"
+				+ "With warm regards,<br/>" 
+				+"Team Admin - STS"
+				+"<br/><br/>"
+				+"Contact:<br/>"
+				+"Transport Helpline<br/>"
+				+"(080) 3313 4449<br/><br/>"
+				+"Emergency Helpline<br/>"
+				+"(080) 3313 3333<br/><br/>"
+				+"Escalation:<br/>"
+				+"Aditya Bhagat <br/>"
+				+"(+91 9886149611)"
+				+"<br/>";
+		
+		return message;
+	}
+	
+}

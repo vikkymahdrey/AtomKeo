@@ -1,0 +1,68 @@
+package com.agiledge.atom.dao.impl;
+
+import java.util.List;
+
+import javax.persistence.Query;
+
+import org.springframework.stereotype.Repository;
+
+import com.agiledge.atom.dao.intfc.PanicDao;
+import com.agiledge.atom.dto.EscalationMatrixDto;
+import com.agiledge.atom.entities.Employee;
+import com.agiledge.atom.entities.Escalationmatrix;
+
+@Repository("panicDao")
+public class PanicDaoImpl extends AbstractDao implements PanicDao{
+
+	public List<Escalationmatrix> getEscallationmatrix() throws Exception {
+		Query q=getEntityManager().createQuery("from Escalationmatrix");
+		List<Escalationmatrix> list=q.getResultList();
+		return list;
+		
+	}
+	
+	public String saveescalation(List<EscalationMatrixDto> list) throws Exception{
+		String result="true";
+		int i=1;
+		List<Escalationmatrix> er=getEntityManager().createQuery("from Escalationmatrix").getResultList();
+		if(er!=null&&er.size()>0){
+			for(Escalationmatrix em:er){
+			delete(em);
+			}
+		}
+		for(EscalationMatrixDto em:list){
+			
+			if(em.getEmpid()!=null){
+			Escalationmatrix e=new Escalationmatrix();
+			e.setLevel(em.getLevel());
+			e.setEmployee(getEntityManager().find(Employee.class, em.getEmpid()));
+			e.setEscalationGroup("Admin");
+			e.setTimeSlot(em.getEmptimeslot());
+			update(e);
+			Escalationmatrix e1=new Escalationmatrix();
+			e1.setLevel(em.getLevel());
+			e1.setEmployee(getEntityManager().find(Employee.class, em.getVendorempid()));
+			e1.setEscalationGroup("Vendor");
+			e1.setTimeSlot(em.getVendortime());
+			update(e1);
+			}
+			else{
+				Escalationmatrix e=new Escalationmatrix();
+				e.setLevel(em.getLevel());
+				e.setEscalationGroup("Admin");
+				e.setTimeSlot(em.getEmptimeslot());
+				update(e);
+				Escalationmatrix e1=new Escalationmatrix();
+				e1.setLevel(em.getLevel());
+				e1.setEscalationGroup("Vendor");
+				e1.setTimeSlot(em.getVendortime());
+				update(e1);
+			}
+		}
+		return result;
+	}
+	
+	
+	
+
+}

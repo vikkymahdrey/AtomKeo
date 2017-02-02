@@ -1,0 +1,11 @@
+package com.agiledge.atom.dao.intfc;
+
+import java.util.ArrayList;
+
+import com.agiledge.atom.dto.TripDetailsDto;
+
+public interface TripDao {
+
+	ArrayList<TripDetailsDto> getStationaryVehiclePosition(String branch) throws Exception;
+
+}

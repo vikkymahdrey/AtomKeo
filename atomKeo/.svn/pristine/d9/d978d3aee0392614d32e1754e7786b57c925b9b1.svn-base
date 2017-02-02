@@ -1,0 +1,54 @@
+package com.agiledge.atom.dao.intfc;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.json.simple.JSONObject;
+
+import com.agiledge.atom.dto.TripDetailsChildDto;
+import com.agiledge.atom.dto.TripDetailsDto;
+import com.agiledge.atom.entities.EmployeeSchedule;
+import com.agiledge.atom.entities.TripDetail;
+import com.agiledge.atom.entities.TripDetailsChild;
+
+public interface TripDetailsDao {
+	
+	ArrayList<TripDetailsDto> getRoutingSummary(int siteId,String tripDate, String tripLog, String tripTime) throws Exception;
+	ArrayList<TripDetailsDto> getTripSheetModified(String tripDate, String tripMode,	String siteId, String tripTime) throws Exception;
+	ArrayList<TripDetailsDto> getTripSheetSaved(String tripDate, String tripMode,String siteId, String tripTime) throws Exception;
+	ArrayList<TripDetailsDto> getTripSheetActual(String tripDate,String tripMode, String siteId, String tripTime) throws Exception;
+	int checkSecurity(String siteId, String tripTime) throws Exception;
+	ArrayList<TripDetailsChildDto> getTripSheetRemoved(String tripDate,String siteId, String tripMode, String tripTime) throws Exception;
+	/*Calling directly in JSP due to JSP Logic*/
+	TripDetailsDto getTripSheetByTrip(String tripId) throws Exception;
+	
+	/* Calling directly in TRipDetailsDao due to bussiness logic */ 
+	public void createUniqueID(String date, String mode, String siteid) throws Exception;
+	
+	List<TripDetail> getTripDetails(String tripDate, String tripLog, String siteId,String tripTime, String tripids) throws Exception;
+	TripDetail saveTrip(TripDetail td) throws Exception;
+	public void getIncremenetedUnique() throws Exception;
+	void saveTripCode(TripDetail td) throws Exception;
+	ArrayList<TripDetailsDto> getTripSheetSavedNotVendorAssigned(String date,String log, String siteId, String time) throws Exception;
+	TripDetail getTripsById(String trip) throws Exception;
+	ArrayList<TripDetailsDto> getTripsWithVehicle(String branch,String filshift, String vehno) throws Exception;
+	ArrayList<TripDetailsDto> getTripSheetSaved(String vendorId,String tripDate, String tripLog, String siteId, String tripTime) throws Exception;
+	ArrayList<TripDetailsDto> getTripSheetModified(String vendorCompany,String tripDate, String tripMode, String siteId, String tripTime) throws Exception;
+	ArrayList<TripDetailsDto> getVendorAssignedTrip(String vendorCompany, String siteId,	String tripDate, String[] tripTime, String tripMode, String src) throws Exception;
+	/*For Vehicle Allocation... */
+	boolean updateTripDetails(TripDetail td) throws Exception;
+	int setTripReadyForTracking(String tripId, String vehicleNo) throws Exception;
+	void getDriverNameAndMob(TripDetailsDto dto) throws Exception;
+	JSONObject getReplayData(String fromdate,String todate,String imei);
+	JSONObject getlivetrackingdata();
+	List<TripDetail> getTripSheet(String tripDate, String tripMode,String tripTime)throws Exception;
+	TripDetail insertIntoTripDetails(TripDetail td)throws Exception;
+	TripDetailsChild insertIntoTripDetailsChild(TripDetailsChild tdc)throws Exception;
+	List<TripDetail> getTripSheetSaved(String tripDate, String tripMode,String tripTime)throws Exception;
+	List<TripDetail> getActualTripSheet(String tripDate, String tripMode,String tripTime)throws Exception;
+	List<TripDetail> getTripDetailsForTripSheet(String tripDate,String tripLog, String siteId, String tripTime, String tripids)throws Exception;
+	public List<EmployeeSchedule> getSchedulesbyDate(String status,String empid,String fromdate,String todate) throws Exception;
+	public boolean CancelSchedule(String schid) throws Exception;
+	public boolean ModifySchedule(String schid,String time,String logtype,String date) throws Exception;
+	public EmployeeSchedule getschedulebyId(String schid) throws Exception;
+}

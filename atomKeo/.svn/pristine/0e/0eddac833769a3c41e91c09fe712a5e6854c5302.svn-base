@@ -1,0 +1,184 @@
+package com.agiledge.atom.entities;
+
+import java.io.Serializable;
+import javax.persistence.*;
+import java.math.BigInteger;
+import java.util.List;
+
+
+/**
+ * The persistent class for the escort database table.
+ * 
+ */
+@Entity
+@NamedQuery(name="Escort.findAll", query="SELECT e FROM Escort e")
+public class Escort implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+	@Id
+	@GeneratedValue(strategy=GenerationType.AUTO)
+	private int id;
+
+	private String address;
+
+	private String email;
+
+	private BigInteger escortClock;
+
+	private String name;
+
+	private String password;
+
+	private String phone;
+
+	//bi-directional many-to-one association to Site
+	@ManyToOne(fetch=FetchType.LAZY)
+	@JoinColumn(name="site")
+	private Site siteBean;
+
+	//bi-directional many-to-one association to TripDetail
+	@OneToMany(mappedBy="escort")
+	private List<TripDetail> tripDetails;
+
+	//bi-directional many-to-one association to TripDetailsParentModified
+	@OneToMany(mappedBy="escort")
+	private List<TripDetailsParentModified> tripDetailsParentModifieds;
+
+	//bi-directional many-to-one association to VendorTripSheetEscort
+	@OneToMany(mappedBy="escort")
+	private List<VendorTripSheetEscort> vendorTripSheetEscorts;
+
+	public Escort() {
+	}
+
+	public int getId() {
+		return this.id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getAddress() {
+		return this.address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+	public String getEmail() {
+		return this.email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public BigInteger getEscortClock() {
+		return this.escortClock;
+	}
+
+	public void setEscortClock(BigInteger escortClock) {
+		this.escortClock = escortClock;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getPassword() {
+		return this.password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getPhone() {
+		return this.phone;
+	}
+
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
+	public Site getSiteBean() {
+		return this.siteBean;
+	}
+
+	public void setSiteBean(Site siteBean) {
+		this.siteBean = siteBean;
+	}
+
+	public List<TripDetail> getTripDetails() {
+		return this.tripDetails;
+	}
+
+	public void setTripDetails(List<TripDetail> tripDetails) {
+		this.tripDetails = tripDetails;
+	}
+
+	public TripDetail addTripDetail(TripDetail tripDetail) {
+		getTripDetails().add(tripDetail);
+		tripDetail.setEscort(this);
+
+		return tripDetail;
+	}
+
+	public TripDetail removeTripDetail(TripDetail tripDetail) {
+		getTripDetails().remove(tripDetail);
+		tripDetail.setEscort(null);
+
+		return tripDetail;
+	}
+
+	public List<TripDetailsParentModified> getTripDetailsParentModifieds() {
+		return this.tripDetailsParentModifieds;
+	}
+
+	public void setTripDetailsParentModifieds(List<TripDetailsParentModified> tripDetailsParentModifieds) {
+		this.tripDetailsParentModifieds = tripDetailsParentModifieds;
+	}
+
+	public TripDetailsParentModified addTripDetailsParentModified(TripDetailsParentModified tripDetailsParentModified) {
+		getTripDetailsParentModifieds().add(tripDetailsParentModified);
+		tripDetailsParentModified.setEscort(this);
+
+		return tripDetailsParentModified;
+	}
+
+	public TripDetailsParentModified removeTripDetailsParentModified(TripDetailsParentModified tripDetailsParentModified) {
+		getTripDetailsParentModifieds().remove(tripDetailsParentModified);
+		tripDetailsParentModified.setEscort(null);
+
+		return tripDetailsParentModified;
+	}
+
+	public List<VendorTripSheetEscort> getVendorTripSheetEscorts() {
+		return this.vendorTripSheetEscorts;
+	}
+
+	public void setVendorTripSheetEscorts(List<VendorTripSheetEscort> vendorTripSheetEscorts) {
+		this.vendorTripSheetEscorts = vendorTripSheetEscorts;
+	}
+
+	public VendorTripSheetEscort addVendorTripSheetEscort(VendorTripSheetEscort vendorTripSheetEscort) {
+		getVendorTripSheetEscorts().add(vendorTripSheetEscort);
+		vendorTripSheetEscort.setEscort(this);
+
+		return vendorTripSheetEscort;
+	}
+
+	public VendorTripSheetEscort removeVendorTripSheetEscort(VendorTripSheetEscort vendorTripSheetEscort) {
+		getVendorTripSheetEscorts().remove(vendorTripSheetEscort);
+		vendorTripSheetEscort.setEscort(null);
+
+		return vendorTripSheetEscort;
+	}
+
+}

@@ -1,0 +1,10 @@
+package com.agiledge.atom.dao.intfc;
+
+import org.json.simple.JSONObject;
+
+public interface DeviceDao {
+
+	public JSONObject checkpassword(JSONObject json);
+	public JSONObject inserttrackingdata(JSONObject json);
+	public JSONObject stoptrip(JSONObject json);
+}

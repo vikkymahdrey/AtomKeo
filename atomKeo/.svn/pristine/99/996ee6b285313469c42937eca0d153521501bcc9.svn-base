@@ -1,0 +1,262 @@
+<%@page import="com.agiledge.atom.constants.SettingsConstant"%>
+<%@page import="com.itextpdf.text.log.SysoLogger"%>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+<head>
+<script type="text/javascript" src="js/jquery-latest.js"></script>
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" type="text/css" href="css/coin-slider.css" />
+<link href="css/dropdown/dropdown.css" media="screen" rel="stylesheet"	type="text/css" />
+
+<link href="css/dropdown/dropdown.vertical.css" media="screen"
+	rel="stylesheet" type="text/css" />
+<link href="css/dropdown/themes/default/default.advanced.css"
+	media="screen" rel="stylesheet" type="text/css" />
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Login Page</title>
+
+<script type="text/javascript">
+
+	function browserIdentity()
+	{
+		if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)){ //test for MSIE x.x;
+			 var ieversion=new Number(RegExp.$1) // capture x.x portion and store as a number
+			  
+			   if (ieversion<=7)
+			 	 alert("You are using older version of Internet Explorer. Please upgrade your browser.");
+			 
+	}
+	}
+	function validate() {
+		var uname = document.getElementById("uname").value;
+		var password = document.getElementById("pass").value;
+		document.getElementById("namevalid").innerHTML = "";
+		document.getElementById("passvalid").innerHTML = "";
+		if (uname.length < 1) {
+			document.getElementById("namevalid").innerHTML = "UserName can't be blank !";
+			return false;
+		}
+		if (password.length < 1) {
+			document.getElementById("passvalid").innerHTML = "Password can't be blank !";
+			return false;
+		}
+	}
+	 
+</script>
+
+
+<%
+response.setHeader("Cache-Control","no-cache, no-store, must-revalidate");
+
+response.setHeader("Pragma", "co-cache");
+response.setDateHeader("Expires", 0);
+String prePageUrl="";
+try{
+    
+  String type=request.getParameter("prePage");
+  
+  System.out.println(" type : " +type);
+ 	prePageUrl=type.replaceFirst("___", "?");
+ 	prePageUrl=prePageUrl.replaceAll("___", "&");
+  
+        System.out.println(" prepage : " +prePageUrl);
+        
+       
+
+
+}catch(Exception e)
+{
+System.out.println("Error"+e);	
+}
+ %>
+
+
+
+</head>
+<body onload="browserIdentity();">
+
+	<div class="container">
+		<div class="header">
+			
+			<div class="clear"></div>
+		</div>
+
+
+		<div class="clr"></div>
+
+
+	</div>
+
+	<div id="body">
+		<div id="content">
+
+
+
+			<%
+			String error = "" + session.getAttribute("error");
+			if (error.equals("null")) {
+				error = "";
+			}
+		%>
+		
+				<table style="float: right;width: 40%">
+<tr>
+					<td width="10%"><a href="http://www.agiledgesolutions.com"><img
+							src="images/agile.png" /></a></td>
+
+					<td width="90%">
+						<h1 style="color: #FF4000;">ATOm</h1>
+						<h4>Agiledge Transport Optimization manager</h4>
+					</td>
+			</table>
+			<div style="width: 60%;">
+			<%if(SettingsConstant.comp.equalsIgnoreCase("cd")||SettingsConstant.comp.equalsIgnoreCase("cd1")) {%>
+<img style="float: left;" alt="" src="CROSSDOMAIN_logo.jpg">
+<%} else{%>
+<img style="float: left;" alt="" >
+<%} %>
+<div style="float: left;font-size: x-large;">
+
+		<%if(SettingsConstant.comp.equalsIgnoreCase("cd")||SettingsConstant.comp.equalsIgnoreCase("cd1")) {%>
+crossdomain Logistics Portal
+<%} else if (SettingsConstant.comp.equalsIgnoreCase("gss")||SettingsConstant.comp.equalsIgnoreCase("gss1")) {%>
+
+GSS Logistics Portal
+<%} else {%>
+Logistics Portal<%} %>
+<br/>
+<br/>
+<br/>
+<br/>
+<div style="margin-left: 150px;font-size: x-large;">
+One stop destination for all transport services
+</div>
+</div>
+</div>
+
+
+					
+
+<div style="float: right;">
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<p >
+<%
+				try{
+					String message=request.getParameter("message");
+					if(message!=null&&!message.equals(""))
+					{
+						System.out.println("...........");
+					%>
+					<div class="failure">
+						<b><%=message %></b>
+					</div>
+					<%
+					}
+					else
+					{						
+						message = "";
+							message = session.getAttribute("status").toString();
+						session.setAttribute("status", "");
+						if (message != null && !message.equals("")) {
+					%>
+					<div id="statusMessage">
+
+						<%=message%>
+
+					</div>
+					<%
+						}
+	
+					}
+				
+				}catch(Exception e)
+				{
+					;
+				}
+					
+				%>
+<br/>
+
+					<form  name="user_validation_form"
+						id="user_validation_form" 
+						onsubmit="return validate()" method="post" action="login">
+						
+						 <input type="hidden" name="prePage" value="<%=prePageUrl%>" /> 
+						<div align="center">
+							<table id="loginTable">
+							<tr>
+							<td colspan="2" align="center" style="font-style: italic;font-weight: bold;color: blue;">
+							Hello! Welcome to ATOm
+							</td>
+							</tr>
+								<tr>
+									<td width="20%"><label>Username</label></td>
+									<td><input name="uname" id="uname" size="35" type="text" />
+										<label id="namevalid" style="color: red;"></label></td>
+								</tr>
+								<tr>
+									<td width="20%"><label>Password</label></td>
+									<td><input name="pass" id="pass" type="password" size="35" />
+										<label id="passvalid" style="color: red;"></label></td>
+								</tr>
+								<tr>
+									<td colspan="2">
+										<div style="margin-left: 33%;">
+											<input name="submit" style="float: left;" class="formbutton"
+												value="Submit" type="submit" />&nbsp; <input name="reset"
+												class="formbutton" value="Reset" type="reset" />
+
+										</div>
+									</td>
+								</tr>
+							</table>
+
+						</div>
+						<div style="margin-left: -25%">
+							<P>
+								<i>
+								<%
+								if(SettingsConstant.comp.equalsIgnoreCase("cd")||SettingsConstant.comp.equalsIgnoreCase("cd1")){
+									 %>
+								 Note : Login with PeopleWorks user name and password &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://www.peopleworks.ind.in/">Forgot Password?</a>
+								 <%}else{ %>
+								 Note : Login with user name and password &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="forgotPassword.jsp">Forgot Password?</a>
+								 <%} %>
+								 </i>
+							</P>
+						</div>
+					</form>
+</div>
+			</div>
+			<hr />
+			
+			<div id="footer">
+
+
+				<div class="footer-bottom">
+					<p>
+						Note: <i>Best viewed in Internet Explorer 8.0 and above at
+							resolution 1024 X 768 </i>
+					</p>
+					<p>
+
+						&copy; ATOm: Agiledge Transport Optimization manager (TM) All Rights
+						Reserved: 2014 Agiledge Process Solutions Private Limited.
+					</p>
+				</div>
+			</div>
+		</div>
+</body>
+</html>

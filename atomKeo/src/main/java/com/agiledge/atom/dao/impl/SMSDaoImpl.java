@@ -1,0 +1,16 @@
+package com.agiledge.atom.dao.impl;
+
+import org.apache.log4j.Logger;
+import org.springframework.stereotype.Repository;
+
+import com.agiledge.atom.dao.intfc.SMSDao;
+@Repository
+public class SMSDaoImpl extends AbstractDao implements SMSDao {
+	private static final Logger logger = Logger.getLogger(SMSDaoImpl.class);
+
+	public boolean checkClosed(String tripId) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+}

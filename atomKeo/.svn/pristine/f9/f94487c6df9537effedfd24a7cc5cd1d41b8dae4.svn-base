@@ -1,0 +1,146 @@
+package com.agiledge.atom.service.impl;
+
+import java.util.ArrayList;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.agiledge.atom.config.files.OtherFunctions;
+import com.agiledge.atom.dto.TripDetailsChildDto;
+import com.agiledge.atom.dto.TripDetailsDto;
+import com.agiledge.atom.entities.Driver;
+import com.agiledge.atom.entities.Escort;
+import com.agiledge.atom.entities.TripDetail;
+import com.agiledge.atom.service.intfc.DriverService;
+import com.agiledge.atom.service.intfc.EscortService;
+import com.agiledge.atom.service.intfc.SMSService;
+import com.agiledge.atom.service.intfc.TripDetailsService;
+import com.agiledge.atom.sms.SendSMS;
+import com.agiledge.atom.sms.SendSMSFactory;
+import com.agiledge.atom.sms.getMessages;
+@Service
+public class SMSServiceImpl implements SMSService {
+	private static final Logger logger = Logger.getLogger(SMSServiceImpl.class);
+
+	@Autowired
+	private TripDetailsService tripDetailsService;
+	
+	@Autowired
+	private DriverService driverService;
+	
+	@Autowired
+	private EscortService escortService;
+
+	public void sendPasswordToDriver(String tripId) throws Exception {
+		
+				TripDetailsDto tripDto = tripDetailsService.getTripSheetByTrip(tripId);
+								tripDto.setTrip_date(OtherFunctions.changeDateFromat(tripDto.getTrip_date()));
+				Driver driver = driverService.getDriverById(tripDto.getDriverId());
+				
+				String mobileNo = null;
+				String message = null;
+				String firstPickUpTime = OtherFunctions.addTime(tripDto.getTrip_time(), tripDto.getTripDetailsChildDtoList().get(0).getTime());
+				String time = OtherFunctions.changeTimeFormat(tripDto.getTrip_time(), "HH:mm", "hh:mm a");
+
+				int i = 0;
+				if (driver!= null) {
+					mobileNo = driver.getContact() == null ? "" : driver.getContact();
+					message = getMessages.getDriverSMS(tripDto.getTrip_date(),tripDto.getTrip_log(), time, firstPickUpTime,
+							driver.getUsername(), tripDto.getDriverPassword(),
+							tripDto.getIsSecurity(), tripDto.getTrip_code());
+					i++;
+				}
+				SendSMS sendSMS = SendSMSFactory.getSMSInstance();
+				sendSMS.send(mobileNo, message);
+					
+	}
+	
+	public void sendPasswordOfTripsToEscort(String tripId) throws Exception {
+		logger.debug("111@@@");
+		/*TripDetailsDto tripDto = tripDetailsService.getTripSheetByTrip(tripId);
+						tripDto.setTrip_date(OtherFunctions.changeDateFromat(tripDto.getTrip_date()));*/
+		TripDetail td=tripDetailsService.getTripsById(tripId);
+		Escort escort=escortService.getEscortById(String.valueOf(td.getEscort().getId()));
+		
+		String mobileNo = null;
+		String message = null;
+		String time = OtherFunctions.changeTimeFormat(td.getTripTime(), "HH:mm", "hh:mm a");
+
+		int i = 0;
+		if (escort!= null) {
+			mobileNo = escort.getPhone() == null ? "" : escort.getPhone();
+			message = getMessages.getEscortSMSMsg(OtherFunctions.changeDateFromat(td.getTripDate()),td.getTripLog(), time,td.getEscort().getName(), td.getVehicleBean().getRegNo(), td.getDriverPswd(),td.getTripCode());
+					i++;
+		}
+		SendSMS sendSMS = SendSMSFactory.getSMSInstance();
+		sendSMS.send(mobileNo, message);
+			
+}
+
+	public int sendPinSMS(TripDetailsDto tripDto) throws Exception {
+			String mobileNos[] = null;
+			String messages[] = null;
+
+				ArrayList<TripDetailsChildDto> tripDtos = tripDto.getTripDetailsChildDtoList();
+				mobileNos = new String[tripDtos.size()];
+				messages = new String[tripDtos.size()];
+				String inOut = tripDto.getTrip_log();
+				String[] cabNo = tripDto.getVehicleNo().trim().split(" ");
+				tripDto.setVehicleNo(cabNo[cabNo.length - 1]);
+				for (int i = 0; i < tripDtos.size(); i++) {
+					mobileNos[i] = tripDtos.get(i).getContactNumber();
+					messages[i] = getMessages
+							.getPinSMS(tripDtos.get(i).getEmployeeName(), tripDtos
+									.get(i).getPersonnelNo(), OtherFunctions
+									.changeDateFromat(tripDto.getTrip_date()),
+									tripDto.getVehicleNo(),
+									tripDto.getDriverName(), tripDto
+											.getDriverContact(), tripDtos.get(i)
+											.getTime(),
+									tripDtos.get(i).getKeyPin(), inOut, tripDto
+											.getTrip_time());
+				}
+
+			
+			SendSMS sendSMS = SendSMSFactory.getSMSInstance();
+			sendSMS.send(mobileNos, messages);
+			return 1;
+		
+	}
+
+	public void sendPasswordToEscort(String tripId, String password) throws Exception {
+		
+			TripDetailsDto tripDto = tripDetailsService.getTripSheetByTrip(tripId);
+
+			Escort escort = escortService.getEscortById(tripDto.getEscortId());
+			String mobileNo = null;
+			String message = null;
+			int i = 0;
+			if (escort != null) {
+				mobileNo = escort.getPhone() == null ? "" : escort.getPhone();
+				/*
+				 * message = String .format(
+				 * "Hi %s\n----------\nTrip: %s\nTime: %s %s\nUserName: %s\nPassword: %s\nVehicle: %s\nVehicle No: %s\n--------\nATOm.. "
+				 * , driverDto.getDriverName(), tripDto.getTrip_code(),
+				 * tripDto.getTrip_time(), tripDto.getTrip_log(),
+				 * driverDto.getUsername(), tripDto.getDriverPassword(),
+				 * tripDto.getVehicle_type(), tripDto.getVehicleNo());
+				 */
+				message = getMessages
+						.getEscortMesssage(tripDto.getTrip_code(),
+								tripDto.getTrip_log(), tripDto.getTrip_time(),
+								tripDto.getVehicleNo(),
+								tripDto.getDriverName(),
+								tripDto.getDriverContact(),
+								tripDto.getEscortPassword());
+				i++;
+			}
+			
+			SendSMS sendSMS = SendSMSFactory.getSMSInstance();
+			sendSMS.send(mobileNo, message);
+			
+		
+	}
+
+}

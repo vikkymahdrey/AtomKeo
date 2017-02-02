@@ -1,0 +1,30 @@
+package com.agiledge.atom.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.agiledge.atom.dao.intfc.SettingsDao;
+import com.agiledge.atom.dto.SettingsDTO;
+import com.agiledge.atom.entities.Setting;
+import com.agiledge.atom.service.intfc.SettingsService;
+
+@Service("settingsService")
+public class SettingsServiceImpl implements SettingsService {
+
+	@Autowired
+	private SettingsDao settingsDao;
+	
+	public Setting getSettnigs() throws Exception {
+		return settingsDao.getSettings();
+	}
+
+	public SettingsDTO getSettingValue(SettingsDTO settingsDto)	throws Exception {
+		return settingsDao.getSettingValue(settingsDto);
+	}
+
+	public void forceUpdateSettings(SettingsDTO settingsDto) throws Exception {
+	 settingsDao.getSettforceUpdateSettings(settingsDto);
+		
+	}
+
+}

@@ -1,0 +1,181 @@
+package com.agiledge.atom.controller;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.agiledge.atom.dto.ShuttleTripDto;
+import com.agiledge.atom.entities.Employee;
+import com.agiledge.atom.entities.EmployeeSchedule;
+import com.agiledge.atom.entities.EmployeeScheduleAlter;
+import com.agiledge.atom.entities.Site;
+import com.agiledge.atom.entities.Tripshuttle;
+import com.agiledge.atom.entities.Vehicle;
+import com.agiledge.atom.service.intfc.SiteService;
+import com.agiledge.atom.service.intfc.TripDetailsService;
+import com.agiledge.atom.service.intfc.VehicleTypeService;
+
+
+
+@Controller
+public class ReportController {
+	
+	private final static Logger logger = Logger.getLogger(ReportController.class);
+	
+	@Autowired
+	private SiteService siteService;
+	
+	@Autowired
+	private VehicleTypeService vehicleTypeService;
+	
+	@Autowired
+	private TripDetailsService tripDetailsService;
+	
+	@RequestMapping(value= {"/shuttleDistanceTravel"})
+	public String shuttleDistanceTravelHandler(Map<String,Object> map) throws Exception  {
+		List<Site> sites=siteService.getSites();
+		List<Vehicle> vehicles=vehicleTypeService.getAllVehicle();
+			map.put("sites", sites);
+			map.put("vehicles", vehicles);
+		return "shuttle_distance_travel";
+	}
+	
+	@RequestMapping(value= {"/shuttleDistanceReportSubmit"},method=RequestMethod.POST)
+	public String shuttleDistanceSubmit(HttpServletRequest request,RedirectAttributes redirectAttributes) throws Exception  {
+		String site=request.getParameter("site");
+			String fromDate = request.getParameter("fromDate");
+				String toDate = request.getParameter("toDate");
+					String vehicle = request.getParameter("chosenregNo");
+		List<Tripshuttle> shuttleTripsDetails=vehicleTypeService.getShuttleTripDetails(site,fromDate,toDate,vehicle);
+		List<ShuttleTripDto> shuttleTripDtoList=null;
+		shuttleTripDtoList=new ArrayList<ShuttleTripDto>();
+		ShuttleTripDto stDto=null;
+		
+		if(shuttleTripsDetails!=null)
+		{	
+			logger.debug("Tripshuttle size "+shuttleTripsDetails.size());
+			
+			for(Tripshuttle ts : shuttleTripsDetails){
+				stDto=new ShuttleTripDto();
+				String vehImei=vehicleTypeService.getVehicleByImei(ts.getImei());
+				
+				stDto.setVehicleNo(vehImei);
+				stDto.setTotaldistance(vehicleTypeService.getDistance(""+ts.getId(), fromDate, toDate));
+				stDto.setTripDate(ts.getTripendtime());
+				shuttleTripDtoList.add(stDto);
+				
+			}
+		
+		}
+			//redirectAttributes.addFlashAttribute("shuttleTripsDetails",shuttleTripsDetails);
+			redirectAttributes.addFlashAttribute("shuttleTripDtoList",shuttleTripDtoList);
+				return "redirect:/shuttleDistanceTravel";
+	}
+	
+	@RequestMapping(value= {"adminviewtrip"},method=RequestMethod.GET)
+	public ModelAndView adminviewtrip(HttpServletRequest request) throws Exception{
+	ModelAndView mv =new ModelAndView("viewTransportBooking");
+	Calendar cal = Calendar.getInstance();
+	String fromdate=cal.YEAR+"-"+cal.MONTH+"-"+cal.DATE;
+	List<EmployeeSchedule> list=tripDetailsService.getSchedulesbyDate("a", "admin", fromdate, fromdate);
+	mv.addObject("list",list);
+	return mv;
+	}
+	
+	@RequestMapping(value= {"employeeviewtrip"},method=RequestMethod.GET)
+	public ModelAndView employeeviewtrip(HttpServletRequest request) throws Exception{
+	ModelAndView mv =new ModelAndView("viewTransportBooking");
+	Calendar cal = Calendar.getInstance();
+	String fromdate=cal.YEAR+"-"+cal.MONTH+"-"+cal.DATE;
+	Employee emp=(Employee) request.getSession().getAttribute("userLoggedIn");
+	System.out.println(emp.getId());
+	List<EmployeeSchedule> list=tripDetailsService.getSchedulesbyDate("a", emp.getId(), fromdate, fromdate);
+	mv.addObject("list",list);
+	return mv;
+	}
+	
+	@ResponseBody
+	@RequestMapping(value= {"canceltrip"},method=RequestMethod.GET)
+	public String canceltrip(HttpServletRequest request) throws Exception{
+		String schid=request.getParameter("schid");
+		boolean flag=tripDetailsService.CancelSchedule(schid);
+		if(flag)
+			return "true";
+		else
+		return "false";
+	}
+	
+	@RequestMapping(value= {"modifytrip"},method=RequestMethod.GET)
+	public String modifytrip(HttpServletRequest request) throws Exception{
+		String schid=request.getParameter("schid");
+		String time=request.getParameter("time");
+		String logtype=request.getParameter("logtype");
+		String date=request.getParameter("date");
+		boolean flag=tripDetailsService.ModifySchedule(schid, time, logtype,date);
+		if(flag)
+			return "true";
+		else
+		return "false";
+	}
+	
+	@RequestMapping(value= {"modifytripview"},method=RequestMethod.GET)
+	public ModelAndView modifytripview(HttpServletRequest request) throws Exception{
+		String schid=request.getParameter("schid");
+		EmployeeSchedule es=tripDetailsService.getschedulebyId(schid);
+		List<EmployeeSchedule> list=new ArrayList<EmployeeSchedule>();
+		int daysdiff=es.getToDate().getDate()-es.getFromDate().getDate();
+		List<EmployeeScheduleAlter> esalist=es.getEmployeeScheduleAlters();
+		for(int i=0;i<=daysdiff;i++){
+			EmployeeSchedule ess=new EmployeeSchedule();
+			ess.setId(es.getId());
+			Date d=new Date(es.getFromDate().getTime()+ TimeUnit.DAYS.toMillis( i ));
+			ess.setFromDate(d);
+			ess.setLogStatus(es.getLogStatus());
+			if(esalist.size()>0){
+			for(EmployeeScheduleAlter esal:esalist){
+				if(esal.getDate().getDate()==d.getDate()){
+						ess.setLoginTime(esal.getLoginTime());
+						ess.setLogoutTime(esal.getLogoutTime());
+						System.out.println("esallog"+esal.getLogoutTime());
+				}else{
+					if(es.getLogStatus().equalsIgnoreCase("IN")){
+						ess.setLoginTime(es.getLoginTime());
+						}
+						else{
+						ess.setLogoutTime(es.getLogoutTime());
+						}
+				}
+			}
+			}
+			else{
+				if(es.getLogStatus().equalsIgnoreCase("IN")){
+				ess.setLoginTime(es.getLoginTime());
+				}
+				else{
+				ess.setLogoutTime(es.getLogoutTime());
+				}
+			}
+			if(ess.getFromDate().after(new Date()))
+			list.add(ess);
+		}
+		ModelAndView mv=new ModelAndView("modifytripview");
+		System.out.println(list.size());
+		mv.addObject("schedule",list);
+		return mv;
+	}
+	
+}

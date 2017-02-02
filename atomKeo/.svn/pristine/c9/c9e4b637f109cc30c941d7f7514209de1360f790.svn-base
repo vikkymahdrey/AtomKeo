@@ -1,0 +1,36 @@
+package com.agiledge.atom.service.intfc;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.agiledge.atom.dto.DriverVehicleDto;
+import com.agiledge.atom.dto.VehicleDto;
+import com.agiledge.atom.dto.VehicleTypeDto;
+import com.agiledge.atom.entities.DriverVehicle;
+import com.agiledge.atom.entities.Site;
+import com.agiledge.atom.entities.Vehicle;
+import com.agiledge.atom.entities.VehicleType;
+
+public interface VehicleTypeService {
+	 List<VehicleType> getAllVehicleType() throws Exception;
+	 VehicleType getVehicleTypeById(int vehicleTypeId) throws Exception;
+	 VehicleType insertVehicleType(VehicleType vt) throws Exception;
+	 ArrayList<VehicleTypeDto> setVehicleTypeCount(int siteId) throws Exception;
+	 void getAllVehicleTypeByToAppend(ArrayList<VehicleTypeDto> vehicleType) throws Exception;
+	 ArrayList<VehicleTypeDto> getAllVehicleTypeBySite(int siteId) throws Exception;
+	 ArrayList<VehicleDto> getVehicleTrackInInterval(String tripId) throws Exception;
+	 ArrayList<VehicleDto> vehicleTrack(String tripId) throws Exception;
+	 ArrayList<DriverVehicleDto> getVehicleDetails(String vehicleId) throws Exception;
+	 Vehicle getVehicleById(String vehicleId) throws Exception;
+	 List<Vehicle> getAllVehicle()throws Exception;
+	 Vehicle getVehicleByIdNotStatus(String vehicleId) throws Exception;
+	 Vehicle updateVehicleStatus(Vehicle v)throws Exception;
+	 Vehicle addVehicle(Vehicle v) throws Exception;
+	 VehicleType setSiteVehicle(VehicleType vt) throws Exception;
+	 VehicleType setSiteVehicle(String vehicleType, String siteId) throws Exception;
+	 List<Site> getSiteByVehicleType(VehicleType vt)throws Exception;
+	DriverVehicle addDriverVehicle(String vehicle, String[] vehicleDrivers) throws Exception;
+	
+	
+	
+}

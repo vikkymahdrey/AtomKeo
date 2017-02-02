@@ -1,0 +1,5 @@
+package com.agiledge.atom.dao.intfc;
+
+public interface SMSDao {
+
+}

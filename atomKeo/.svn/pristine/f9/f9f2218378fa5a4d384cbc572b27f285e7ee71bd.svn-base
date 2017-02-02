@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1" xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+	<persistence-unit name="coreatomPU">
+		<class>com.agiledge.atom.entities.Area</class>
+		<class>com.agiledge.atom.entities.Branch</class>
+		<class>com.agiledge.atom.entities.Company</class>
+		<class>com.agiledge.atom.entities.Employee</class>
+		<class>com.agiledge.atom.entities.Landmark</class>
+		<class>com.agiledge.atom.entities.Place</class>
+		<class>com.agiledge.atom.entities.Roledelegation</class>
+		<class>com.agiledge.atom.entities.Role</class>
+		<class>com.agiledge.atom.entities.Site</class>
+		<class>com.agiledge.atom.entities.SpocChild</class>
+		<class>com.agiledge.atom.entities.SpocParent</class>
+	</persistence-unit>
+</persistence>

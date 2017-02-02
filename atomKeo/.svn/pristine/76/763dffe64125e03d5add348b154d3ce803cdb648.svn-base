@@ -1,0 +1,285 @@
+
+
+<%@page import="com.agiledge.atom.config.files.*"%>
+<%@page import="com.itextpdf.text.log.SysoLogger"%>
+<%@page import="com.agiledge.atom.config.files.*"%>
+<%@page import="com.agiledge.atom.dao.intfc.OtherDao"%>
+<%@page import="com.agiledge.atom.constants.*"%>
+<%@page import="com.agiledge.atom.entities.*"%>
+<%@page import="java.util.ArrayList"%>
+<%@page import="java.util.List"%>
+<!DOCTYPE html >
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+<title>Scheduling For Transportation services</title>
+<script type="text/javascript" src="js/jquery-latest.js"></script>
+<!-- Bootstrap -->
+<link href="css/bootstrap.min.css" rel="stylesheet">
+<link href="css/custom_siemens.css" rel="stylesheet">
+
+<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+	<%
+	Employee emp = (Employee) session.getAttribute("userLoggedIn");	
+	if (emp == null) {
+		String param = request.getServletPath().substring(1) + "___"
+				+ request.getQueryString();
+		response.sendRedirect("/?page=" + param);
+	} else {
+		// empid = Long.parseLong(employeeId); 
+	}
+	%>
+	<div class="wrapper">
+		<div class="header-wrap">
+			<div class="container">
+				<div class="row">
+					<div class="col-sm-12 text-right">
+						<img src="images/user_iocn_header.png" />&nbsp;Welcome
+						<%=emp.getEmployeeFirstName()+""+emp.getEmployeeLastName()%>
+						&nbsp;&nbsp;&nbsp;<a href="logout"><img
+							src="images/logout_icon_header.png" />&nbsp;Log Out</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="main-page-container">
+			<div class="container">
+				<div class="row">
+					<div class="col-sm-12">
+						<div class="breadcrumb-wrap">
+						<% if(emp.getRole().getId()==1){%>
+							<a href="employeeHomeKeo"><img src="images/home.png" /></a>
+							 <a href=""
+								class="current">Book Transport</a>
+							<a
+								href="employeeHomeKeo">My Information </a> 
+						<%}else{ %>	
+						<a href="employeeHome"><img src="images/home.png" /></a>
+						<a
+								href="employeeHome">My Information </a>
+							<%} %>
+							
+
+						</div>
+						<div class="content-wrap">
+
+							<%
+								if (session.getAttribute("status") != null) {
+							%>
+							<div class="row mar-top-40">
+								<div class="col-sm-12">
+									<div class="alert alert-success"><%=session.getAttribute("status")%></div>
+								</div>
+							</div>
+							<%
+								}
+							%>
+							
+							<div class="section-heading">
+								<div class="row">
+									<div class="col-sm-12 bold">
+										<Strong>Book your transport</Strong>
+									</div>
+								</div>
+							</div>
+							<div class="row mar-top-20">
+								<div class="col-sm-12">
+									<div class="alert alert-danger san" hidden="hidden"
+										style="color: red">
+										<p id="errortag"></p>
+									</div>
+								</div>
+							</div>
+							<form id="frm1" method="POST" name="form1"
+								action="transportBooking" onsubmit="return validate()">
+								<div class="push-15 login-input-wrap">
+									<div class="row">
+										<div
+											class="col-md-5 col-sm-5 col-xs-6 mar-top-15 text-lightgrey ">From
+											Date</div>
+										<div class="col-md-6 col-sm-7 col-xs-6 mar-top-15">
+											<input type="text" name="travelDate" id="travelDate"
+												style="width: 160px" class="form-control" />
+										</div>
+
+									</div>
+									<div class="row">
+										<div
+											class="col-md-5 col-sm-5 col-xs-6 mar-top-15 text-lightgrey ">To
+											Date</div>
+										<div class="col-md-6 col-sm-7 col-xs-6 mar-top-15">
+											<input type="text" name="travelDate1" id="travelDate1"
+												style="width: 160px" class="form-control" />
+										</div>
+
+									</div>
+
+
+									<div class="row">
+										<div
+											class="col-md-5 col-sm-5 col-xs-6 mar-top-15 text-lightgrey ">Drop
+											</div>
+										<div class="col-md-6 col-sm-7 col-xs-6 mar-top-15">
+											<select name="pickdrop" id="pickdrop" style="width: 160px"
+												class="form-control">
+												<option value="OUT">Drop</option>
+
+											</select>
+										</div>
+									</div>
+									<div class="row">
+										<div
+											class="col-md-5 col-sm-5 col-xs-6 mar-top-15 text-lightgrey ">Time</div>
+										<div class="col-md-6 col-sm-7 col-xs-6 mar-top-15">
+											<select name="shifttime" id="shifttime" style="width: 160px"
+												class="form-control">
+												<%=OtherFunctions.FullTimeInIntervalOptions()%>
+
+											</select>
+										</div>
+									</div>
+
+								</div>
+
+								<div class="row">
+									<div class="col-sm-12 text-red text-12" style="color: red">
+									*Note:
+										<p>Cut off time for transport booking is 1 hour before the scheduled departure time</p>
+										<p>Currently drop service is available at 20:00 and 21:00 hours only</p></div>
+								</div>
+
+								<div class="row text-center mar-btm-30">
+									<div class="col-sm-12">
+										<input type="submit" class="btn btn-blue save-btn"
+											value="Book" />
+									</div>
+								</div>
+							</form>
+						</div>
+						<div class="footer-wrap">
+							<div class="row">
+								<div class="col-sm-12 text-center">
+									<p class="text-12">
+										The information stored on this website is maintained in
+										accordance with the organization's Data Privacy Policy. </span><br />Copyright
+										© 2016 siemens
+								</div>
+							</div>
+
+						</div>
+
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+
+	<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+	<!-- Include all compiled plugins (below), or include individual files as needed -->
+	<script src="js/bootstrap.min.js"></script>
+
+</body>
+<script src="https://code.jquery.com/jquery-2.2.0.js"></script>
+<script type="text/javascript" src="js/jquery-latest.js"></script>
+<style type="text/css">
+@import "css/jquery.datepick.css";
+</style>
+<script type="text/javascript" src="js/jquery.datepick.js"></script>
+
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		$("#travelDate1").datepick();
+		$("#travelDate").datepick();
+		$("#shiftTime").change(function() {
+			validateTime($("#shiftTime").val());
+		});
+	});
+	function validate() {
+		
+		var fromDate = document.getElementById("travelDate").value;
+		var toDate = document.getElementById("travelDate1").value;
+		var time = document.getElementById("shifttime").value;
+		var log=document.getElementById("pickdrop").value;
+		var currentDate = new Date();
+		var currentDatevar = currentDate.getDate() + "/"+ currentDate.getMonth() + "/" + currentDate.getFullYear();
+		var daybeforeDatevar = currentDate.getDate()-1 + "/"+ currentDate.getMonth() + "/" + currentDate.getFullYear();
+		var monthP =currentDate.getMonth() +1;
+		var dateT = currentDate.getDate()+1
+		if(dateT < 10){
+			dateT = "0"+dateT;
+		}
+		if(monthP < 10){
+			monthP = "0"+monthP;
+		}
+		var nxtDatevar = dateT+ "/"
+		+ monthP+ "/" + currentDate.getFullYear();
+		
+		
+		var currentTime = currentDate.getHours()*60+currentDate.getMinutes();
+		var cutoffTime = currentTime+60;
+		var startTimesplit = time.split(":");
+		var startTimeMIn = parseInt(startTimesplit[0]*60 )+parseInt(startTimesplit[1]);
+		if (fromDate.length < 1) {
+			document.getElementById("errortag").innerHTML = "Choose From Date";
+	 $('.validation-required').removeClass("validation-required").addClass("form-control");
+	 $('.san').show();
+	 document.getElementById("travelDate").focus();
+			return false;
+
+		} else if (toDate.length < 1) {
+			document.getElementById("errortag").innerHTML = "Choose To Date";
+			 $('.validation-required').removeClass("validation-required").addClass("form-control");
+			 $('.san').show();
+			 document.getElementById("travelDate1").focus();
+			//  date.focus();
+			return false;
+
+		
+		} else if (toDate<fromDate) {
+			document.getElementById("errortag").innerHTML = "FromDate should be less than ToDate";
+			 $('.validation-required').removeClass("validation-required").addClass("form-control");
+			 $('.san').show();
+			 document.getElementById("travelDate1").focus();
+			//  date.focus();
+			return false;
+
+		} else if (log == null || log == "") {
+			document.getElementById("errortag").innerHTML = "Choose Pick/Drop";
+			 $('.validation-required').removeClass("validation-required").addClass("form-control");
+			 $('.san').show();
+			 document.getElementById("log").focus();
+			//  date.focus();
+			return false;
+		}else if(fromDate < nxtDatevar){
+			alert(startTimeMIn < cutoffTime );
+			if( startTimeMIn < cutoffTime  ) {
+				document.getElementById("errortag").innerHTML = "!booking request is available only before 1 hour...";
+				 $('.validation-required').removeClass("validation-required").addClass("form-control");
+				 $('.san').show();
+				 document.getElementById("shifttime").focus();
+			//  date.focus();
+			return false;}
+		} 
+	        
+	    else
+	    	{
+	    	return true;
+	    	}
+	   
+	}
+	
+</script>
+
+</html>

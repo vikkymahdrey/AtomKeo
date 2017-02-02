@@ -1,0 +1,106 @@
+package com.agiledge.atom.dao.impl;
+
+import java.math.BigInteger;
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.Query;
+
+import org.apache.log4j.Logger;
+import org.springframework.stereotype.Repository;
+
+import com.agiledge.atom.config.files.OtherFunctions;
+import com.agiledge.atom.dao.intfc.SettingsDao;
+import com.agiledge.atom.dto.SettingsDTO;
+import com.agiledge.atom.entities.Setting;
+
+@Repository("settingsDao")
+public class SettingsDaoImpl extends AbstractDao implements SettingsDao{
+	private static final Logger logger = Logger.getLogger(SettingsDaoImpl.class);
+
+	public Setting getSettings() throws Exception {
+		Query query = getEntityManager().createQuery("from Setting");
+		return (Setting) query.getResultList().get(0);
+	}
+
+	public SettingsDTO getSettingValue(SettingsDTO pDto)	throws Exception {
+		
+		SettingsDTO dto=null;
+		String value="";
+		String fromDateQuery = "";
+		String toDateQuery = " and s.toDate is null ";
+		String siteQuery=" and ss.site is null ";
+		if(pDto.getEffectivedate()!=null && pDto.getEffectivedate().equals("")==false) {
+			fromDateQuery = " and s.fromDate<="+ OtherFunctions.changeDateFromat(pDto.getEffectivedate());
+		}
+		if(pDto.getTodate()!=null && pDto.getTodate().equals("")==false) {
+			toDateQuery = " and s.fromDate>"+OtherFunctions.changeDateFromat(  pDto.getTodate());
+		}
+		if(pDto.getSiteid()>0) {
+			siteQuery = " and ss.site=" + pDto.getSiteid();  
+				 
+		}
+		String moduleQuery="";
+		if(OtherFunctions.isEmpty(pDto.getModule())==false) {
+			moduleQuery = " and s.module='" + pDto.getModule() + "' ";
+		}
+		String query="Select s.id, ss.site,s.fromDate,s.toDate,s.property,s.value from settings_table s left join site_settings ss on s.id=ss.settingsId where s.property='"+pDto.getProperty()+"' " + fromDateQuery + " " + toDateQuery + " " +
+		siteQuery + " " + moduleQuery + "  order by s.id desc  ";
+		try{
+			 
+			Query q=getEntityManager().createNativeQuery(query);
+			List<Object[]> oList=q.getResultList();
+			for(Object[] o: oList){
+				 	dto=new SettingsDTO();
+					dto.setId(((BigInteger)o[0]).intValue());
+					try {
+					dto.setSiteid(((BigInteger)o[1]).intValue());
+					}catch(Exception e) {
+						dto.setSiteid(-1);
+					}
+					dto.setEffectivedate((Date)o[2]);
+						 
+					dto.setTodate((Date)o[3]);
+				
+					dto.setProperty(String.valueOf(4));
+				 
+					dto.setAmount(String.valueOf(5));
+				 
+					dto.setValue(String.valueOf(5));
+				 
+			
+				 
+			}
+			
+			
+		}catch (Exception e) {
+			logger.error("IN CATCH "+e);
+		}
+		return dto;
+	}
+
+	public void getSettforceUpdateSettings(SettingsDTO pDto)throws Exception {
+		
+		SettingsDTO dto=null;
+		String value="";
+		String fromDateQuery = "";
+		String toDateQuery = " and s.toDate is null ";
+		String siteQuery=" and ss.site is null ";
+		if(pDto.getEffectivedate()!=null&&pDto.getEffectivedate().equals("")==false) {
+			fromDateQuery = " and s.fromDate<="+pDto.getEffectivedate();
+		}
+		if(pDto.getTodate()!=null&&pDto.getTodate().equals("")==false) {
+			toDateQuery = " and s.fromDate>"+pDto.getTodate();
+		}
+		if(pDto.getSiteid()>0) {
+			siteQuery = " and ss.site=" + pDto.getSiteid();  
+				 
+		}
+		String query=" update settings_table s left join site_settings ss on s.id=ss.settingsId   set value='OFF'  where s.property='"+pDto.getProperty()+"' " + fromDateQuery + " " + toDateQuery + " " +
+		siteQuery + " ";
+		Query q=getEntityManager().createNativeQuery(query);
+					q.executeUpdate();
+					
+	}
+
+}

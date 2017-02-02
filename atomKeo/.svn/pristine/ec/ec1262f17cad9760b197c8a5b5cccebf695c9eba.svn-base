@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Atom</title>
+	
+	<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,300italic,400italic,600,600italic,700,700italic,800,800italic' rel='stylesheet' type='text/css'>
+	
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+	
+	
+	<link rel="stylesheet" href="css/atom.css">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body onload="loadScript();">
+  
+  <div class="wrapper">
+	<header>
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-sm-4">
+					<a href="#" class="header-logo">
+						<img src="images/logo.png" alt="atom" />
+					</a>
+				</div>
+			</div>
+		</div>
+	</header>
+	
+	<div class="page-main-heading mar-top-40 mar-btm-25 overflow-hidden">
+		<div class="col-sm-7">
+			<h1 class="text-uppercase text-regular">Live Tracking</h1>
+			<h6 class="text-uppercase text-blue mar-top-5 text-regular">track everything</h6>
+		</div>
+		<div class="col-sm-5 text-right">
+			<button class="btn btn-blue font-16"><img src="images/icon_refresh.png" />&nbsp;&nbsp;REFRESH</button>&nbsp;&nbsp;
+			<button class="btn btn-blue font-16"><img src="images/icon_dashboard.png" />&nbsp;&nbsp;dASHBOARD</button>
+		</div>		
+	</div>
+	
+	<div class="content-wrapper">
+		<div class="col-sm-8">
+			<div class="white-box">
+				<div class="row">
+					<div class="col-sm-6">
+						<h6 class="text-uppercase text-semi-bold"><img src="images/lv_tack_emp_travel_status.png" />&nbsp;&nbsp;Employee Travel Status</h5>
+					</div>
+					<div class="col-sm-6">
+						<ul class="legents-wrap pull-right">
+							<li class="bg-color1">Sheduled</li>
+							<li class="bg-color2">Boarded</li>
+							<li class="bg-color3">Reached</li>
+						</ul>
+					</div>
+				</div>
+				
+				<div class="row lv-track-emp-travel-status mar-top-15">
+					<div class="col-sm-4">
+						<div class=""><span class="glyphicon glyphicon-time"></span>&nbsp;&nbsp;00:15 IN</div>						
+						<div class="progress">
+							<div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 80%">
+								<span class="count">30</span>
+							</div>
+						</div>
+						<div class="progress">
+							<div class="progress-bar progress-bar-danger" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 25%">
+								<span class="count">10</span>
+							</div>
+						</div>
+						<div class="progress">
+							<div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 55%">
+								<span class="count">18</span>
+							</div>
+						</div>						
+					</div>
+					<div class="col-sm-4">
+						<div class=""><span class="glyphicon glyphicon-time"></span>&nbsp;&nbsp;00:30 IN</div>						
+						<div class="progress">
+							<div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 10%">
+								<span class="count">02</span>
+							</div>
+						</div>
+						<div class="progress">
+							<div class="progress-bar progress-bar-danger" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 80%">
+								<span class="count">40</span>
+							</div>
+						</div>
+						<div class="progress">
+							<div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%">
+								<span class="count">14</span>
+							</div>
+						</div>						
+					</div>
+					<div class="col-sm-4">
+						<div class=""><span class="glyphicon glyphicon-time"></span>&nbsp;&nbsp;00:45 IN</div>						
+						<div class="progress">
+							<div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 20%">
+								<span class="count">12</span>
+							</div>
+						</div>
+						<div class="progress">
+							<div class="progress-bar progress-bar-danger" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 60%">
+								<span class="count">25</span>
+							</div>
+						</div>
+						<div class="progress">
+							<div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 50%">
+								<span class="count">20</span>
+							</div>
+						</div>						
+					</div>
+				</div>
+				
+			</div>
+			
+			
+			
+			
+			
+			<div id="map" style="width:100%;height:544px;"></div>
+			
+			
+		</div>
+		
+		<div class="col-sm-4">
+			<div class="white-box">
+				<h6 class="text-uppercase text-semi-bold"><img src="images/lv_track_trip_status.png" />&nbsp;&nbsp;Trip Status</h5>
+				
+				<div class="mar-top-15"><span class="glyphicon glyphicon-time"></span>&nbsp;&nbsp;00:45 IN</div>
+				
+				<div class="lv-tracking-trip-status-counts">
+					<div class="col-sm-4">05</div>
+					<div class="col-sm-4">10</div>
+					<div class="col-sm-4">20</div>
+				</div>
+				
+				<div class="mar-top-15"><span class="glyphicon glyphicon-time"></span>&nbsp;&nbsp;00:45 OUT</div>
+				
+				<div class="lv-tracking-trip-status-counts">
+					<div class="col-sm-4">05</div>
+					<div class="col-sm-4">10</div>
+					<div class="col-sm-4">20</div>
+				</div>
+				
+				
+				<div class="mar-top-15"><span class="glyphicon glyphicon-time"></span>&nbsp;&nbsp;00:45 IN</div>
+				
+				<div class="lv-tracking-trip-status-counts">
+					<div class="col-sm-4">05</div>
+					<div class="col-sm-4">10</div>
+					<div class="col-sm-4">20</div>
+				</div>
+				
+				<div class="legents-wrap mar-top-10">
+					<ul class="legents-wrap pull-right">
+						<li class="bg-color4">Sheduled</li>
+						<li class="bg-color5">Boarded</li>
+						<li class="bg-color6">Reached</li>
+					</ul>
+				</div>
+				
+			</div>
+			<div class="white-box mar-top-20">
+				<div class="row lv-track-panic-alarm-stat-wrap">
+					<div class="col-sm-4">
+						<h6 class="text-semi-bold text-uppercase">Panic Alarm</h6>
+						<p class="font-12">Activated</p>
+						<div class="mar-top-15">
+							<img src="images/lv_track_panic_alarm.png" class="pull-left" />
+							<div class="text-blue pull-right font-36 text-bold">12</div>
+						</div>
+						
+					</div>
+					<div class="col-sm-4">
+						<h6 class="text-semi-bold text-uppercase">Single lady </h6>
+						<p class="font-12">with Escort </p>
+						<div class="mar-top-15">
+							<img src="images/lv_track_single_lady.png" class="pull-left" />
+							<div class="text-blue pull-right font-36 text-bold">12</div>
+						</div>
+						
+					</div>
+					<div class="col-sm-4">
+						<h6 class="text-semi-bold text-uppercase">Single lady </h6>
+						<p class="font-12">without Escort </p>
+						<div class="mar-top-15">
+							<img src="images/lv_track_single_lady_wo_escort.png" class="pull-left" />
+							<div class="text-blue pull-right font-36 text-bold">12</div>
+						</div>
+						
+					</div>
+				</div>
+			</div>
+			<div class="white-box mar-top-20 lv-track-map-pointer-wrap font-12">
+			<div class="tb-row">
+				<div class="col-sm-6">
+					<img src="images/map_pointer_pani_alarm.png" />
+					Panic Alarm<br />Activated cab
+				</div>
+				<div class="col-sm-6">
+					<img src="images/map_pointer_single_lady.png" />
+					
+					Single Lady <br />without escort
+				</div>
+			</div>
+			<div class="tb-row">
+				<div class="col-sm-6">
+					<img src="images/map_pointer_single_lady_wo_escot.png" />
+					Single Lady <br />with escort
+				</div>
+				<div class="col-sm-6">
+					<img src="images/map_pointer_single_lady_cab.png" />
+					Al least One Lady <br />Employee in the Cab	
+				</div>
+			</div>
+			<div class="tb-row">
+				<div class="col-sm-6">
+					<img src="images/map_pointer_only_guys.png" />
+					Only Male Employees <br />in the Cab
+				</div>
+				<div class="col-sm-6">
+					<img src="images/map_pointer_only_driver.png" />
+					Only Driver<br />in the Cab
+				</div>
+			</div>
+			</div>
+		</div>
+		
+		
+	</div>
+	
+  </div>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
+	
+	<script src="http://maps.googleapis.com/maps/api/js"></script>
+<script type="text/javascript">
+function loadScript() {
+	cityLat = 12.9716;
+	cityLon = 77.5946;
+	try {
+		var script = document.createElement("script");
+		script.type = "text/javascript";
+		script.src = "https://maps.googleapis.com/maps/api/js?sensor=true&callback=initialize&client=gme-leptonsoftwareexport&signature=1t2jNPl7sIPdevsQdfKNrx25bko=";			
+		document.body.appendChild(script);
+	} catch (e) {
+
+		alert("ERRO" + e);
+	}
+}
+
+function initialize() {
+	geocoder = new google.maps.Geocoder();
+	var myLatlng = new google.maps.LatLng(cityLat, cityLon);
+	var myOptions = {
+		zoom : 12,
+		center : myLatlng,
+		mapTypeId : google.maps.MapTypeId.ROADMAP
+	};
+	map = new google.maps.Map(document.getElementById("map"), myOptions);
+	displayEmp();	  
+		}
+
+function displayEmp() {
+	$.ajax({url: "getlivetrackingdata", success: function(result){
+		var obj = jQuery.parseJSON(result);
+		
+		var lats=obj.LATS;
+		var lngs=obj.LNGS;
+		var vnos=obj.VEHICLENO;
+		var status=obj.STATUS;
+		for(var i=0;i<lats.length;i++){
+			placeMarker(lats[i],lngs[i],vnos[i])
+		}
+		
+	}
+		});
+}
+
+function placeMarker(lat,lon,vtext,type) {	
+	var image='images/map_pointer_single_lady.png';
+	if(type=="SHUTTLE"){
+		image='images/map_pointer_single_lady_cab.png'
+	}
+	var marker=new google.maps.LatLng(lat, lon);
+	marker = new google.maps.Marker({
+		position : marker,
+		map : map,
+		icon : image,
+		title : vtext
+	});	
+	var infowindow = new google.maps.InfoWindow({
+	    content: vtext
+	  });
+	 marker.addListener('click', function() {
+		    infowindow.open(map, marker);
+		  });
+}
+	</script>
+  </body>
+</html>

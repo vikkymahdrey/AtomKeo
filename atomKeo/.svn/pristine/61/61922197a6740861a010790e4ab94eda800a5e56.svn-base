@@ -1,0 +1,548 @@
+package com.agiledge.atom.service.impl;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.json.simple.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.agiledge.atom.config.files.OtherFunctions;
+import com.agiledge.atom.config.files.RandomString;
+import com.agiledge.atom.dao.impl.AbstractDao;
+import com.agiledge.atom.dao.intfc.TripDetailsDao;
+import com.agiledge.atom.dto.TripDetailsChildDto;
+import com.agiledge.atom.dto.TripDetailsDto;
+import com.agiledge.atom.dto.VehicleTypeDto;
+import com.agiledge.atom.entities.Employee;
+import com.agiledge.atom.entities.EmployeeSchedule;
+import com.agiledge.atom.entities.Landmark;
+import com.agiledge.atom.entities.Site;
+import com.agiledge.atom.entities.TripDetail;
+import com.agiledge.atom.entities.TripDetailsChild;
+import com.agiledge.atom.entities.VehicleType;
+import com.agiledge.atom.entities.VendorTripSheetParent;
+import com.agiledge.atom.service.intfc.AplService;
+import com.agiledge.atom.service.intfc.EmployeeService;
+import com.agiledge.atom.service.intfc.MobileTripSheetService;
+import com.agiledge.atom.service.intfc.SMSService;
+import com.agiledge.atom.service.intfc.SchedulingService;
+import com.agiledge.atom.service.intfc.SiteService;
+import com.agiledge.atom.service.intfc.TripDetailsService;
+import com.agiledge.atom.service.intfc.VehicleTypeService;
+import com.agiledge.atom.utils.DateUtil;
+
+@Service
+public class TripDetailsServiceImpl extends AbstractDao implements TripDetailsService {
+	private static final Logger logger = Logger.getLogger(TripDetailsServiceImpl.class);
+	
+	@Autowired
+	private TripDetailsDao tripDetailsDao;
+	
+	@Autowired
+	private SMSService smsService;
+	
+	@Autowired 
+	AplService aplService;
+	
+	@Autowired
+	private SchedulingService schedulingService;
+	
+	@Autowired
+	private VehicleTypeService vehicleTypeService;
+	
+	@Autowired
+	private EmployeeService employeeService;
+	
+	@Autowired
+	private SiteService siteService;
+	
+	@Autowired
+	private MobileTripSheetService mobileTripSheetService;
+	
+	@Autowired
+	private RandomString randomString;
+	
+	public String routingSummaryHTMLTable(int siteid, String tripDate,
+			String tripLog, String tripTime,
+			ArrayList<VehicleTypeDto> vehicleTypeGiven,int statusForDisplyStyleofVehicleCount) throws Exception {
+		String retData = "";
+		String lastVehiclePart = "";
+		int totalTripCount = 0;
+		int totalEmpCount = 0;
+		int totalSecTripCount=0;
+		int vehicletypeCounts=0;
+
+		ArrayList<TripDetailsDto> dtos = getRoutingSummary(siteid, tripDate,
+				tripLog, tripTime);
+		logger.debug("sizzzzzzzzzzeee"+dtos.size());
+		if(dtos!=null && dtos.size()>0){
+		 vehicletypeCounts = dtos.get(0).getVehicleTypes().size();
+		}
+		try {
+			retData = "<tr><th>&nbsp;</th><th>Date</th><th>IN/OUT</th><th>Time</th><th>Trip#</th><th>Sec_Trip#</th><th>Emp#</th>";
+			String[] vehicleTypesUsed = new String[vehicletypeCounts];
+			int i = 0;
+			for (String vehicletype : dtos.get(0).getVehicleTypes()) {
+				retData += "<th>" + vehicletype + "</th>";
+				vehicleTypesUsed[i] = vehicletype;
+				i++;
+			}
+
+			retData += "</tr>";
+			for (TripDetailsDto detailsDto : dtos) {
+				retData += "<tr><td>&nbsp;</td><td>" + OtherFunctions.changeDateFromatToddmmyyyy(detailsDto.getTrip_date())
+						+ "</td><td>" + detailsDto.getTrip_log() + "</td><td>"
+						+ detailsDto.getTrip_time() + "</td><td>"
+						+ detailsDto.getTripCount() + "</td><td>"
+						+ detailsDto.getSecCount() + "</td><td>"
+						+ detailsDto.getEmpInCount() + "</td>";
+				totalTripCount += Integer.parseInt(detailsDto.getTripCount());
+				totalSecTripCount += detailsDto.getSecCount();
+				totalEmpCount += detailsDto.getEmpInCount();
+				
+				for (i = 0; i < detailsDto.getVehicles().size(); i++) {
+					for (VehicleTypeDto dto1 : vehicleTypeGiven) {
+						if (dto1.getId() == detailsDto.getVehicles().get(i)
+								.getId()) {
+							dto1.setUsedCount(dto1.getUsedCount()
+									+ detailsDto.getVehicles().get(i)
+											.getCount());
+							dto1.setCount(dto1.getCount()
+									+ detailsDto.getVehicles().get(i)
+											.getCount());
+
+						}
+					}
+				}
+				for (int j = 0; j < vehicletypeCounts; j++) {
+					boolean flag = false;
+					for (VehicleTypeDto typeDto : detailsDto.getVehicles()) {
+						if (vehicleTypesUsed[j].equalsIgnoreCase(typeDto
+								.getType())) {
+							retData += "<td>" + typeDto.getCount() + "</td>";
+							flag = true;
+
+						}
+					}
+					if (!flag) {
+
+						retData += "<td>&nbsp;</td>";
+					}
+				}
+			}
+
+			for (String vehicletype : dtos.get(0).getVehicleTypes()) {
+				for (VehicleTypeDto vehicleDto : vehicleTypeGiven) {
+					if (vehicletype.equalsIgnoreCase(vehicleDto.getType())) {
+						if(statusForDisplyStyleofVehicleCount==1){
+						lastVehiclePart += "<td>"+vehicleDto.getUsedCount()+" used out of " + vehicleDto.getCount()+" </td>" ;
+						}
+						else
+						{
+							lastVehiclePart += "<td>" +vehicleDto.getUsedCount();	
+						}
+					}
+
+				}
+			}
+			retData += "</tr><tr><td>Total</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>"
+					+ totalTripCount
+					+ "</td><td>"
+					+ totalSecTripCount
+					+ "</td><td>"
+					+ totalEmpCount
+					+ "</td>"
+					+ lastVehiclePart;
+
+			retData += "</tr>";
+
+		} catch (Exception e) {
+			logger.error("error in service" + e);
+		}
+		return retData;
+	}
+	
+	public ArrayList<TripDetailsDto> getRoutingSummary(int siteId, String tripDate, String tripLog, String tripTime) throws Exception{
+		return tripDetailsDao.getRoutingSummary(siteId, tripDate,	tripLog, tripTime);
+	}
+	
+	public ArrayList<TripDetailsDto> getTripSheetModified(String tripDate, String tripMode,String siteId, String tripTime) throws Exception {
+		ArrayList<TripDetailsDto> tripDetailsDtos=tripDetailsDao.getTripSheetModified(tripDate, tripMode,siteId,tripTime);
+			updateDistanceAndTime(tripDetailsDtos);
+		return tripDetailsDtos;
+	}
+
+	public ArrayList<TripDetailsDto> getTripSheetSaved(String tripDate, String tripMode,String siteId, String tripTime) throws Exception {
+		ArrayList<TripDetailsDto> tripDetailsDtos = tripDetailsDao.getTripSheetSaved(tripDate, tripMode,siteId, tripTime);
+			updateDistanceAndTime(tripDetailsDtos);
+		return tripDetailsDtos;
+	}
+
+	public ArrayList<TripDetailsDto> getTripSheetActual(String tripDate,String tripMode, String siteId, String tripTime) throws Exception{
+		ArrayList<TripDetailsDto> tripDetailsDtos = tripDetailsDao.getTripSheetActual(tripDate, tripMode, siteId, tripTime);
+			updateDistanceAndTime(tripDetailsDtos);
+		return tripDetailsDtos;
+	}
+	
+	public void updateDistanceAndTime(ArrayList<TripDetailsDto> tripDetailsDtos) {
+
+		Calendar cal = Calendar.getInstance();
+		Calendar cal1 = Calendar.getInstance();
+
+		String logTime;
+		for (TripDetailsDto detailsDto : tripDetailsDtos) {
+			try {
+				cal.setTime(OtherFunctions.sqlFormatToDate(detailsDto
+						.getTrip_date()));
+				logTime = detailsDto.getTrip_time();
+				int hr = Integer.parseInt(logTime.split(":")[0]);
+				int mnt = Integer.parseInt(logTime.split(":")[1]);
+				float distance = (float) 0.0;
+				cal.add(Calendar.HOUR, hr);
+				cal.add(Calendar.MINUTE, mnt);
+				cal1.setTime(cal.getTime());			
+				int minusTime = 0;
+				for (int i = 0; i < detailsDto.getTripDetailsChildDtoList()
+						.size(); i++) {
+
+					distance += detailsDto.getTripDetailsChildDtoList().get(i)
+							.getDistance();
+					if (detailsDto.getTrip_log().equals("IN")) {
+						if (detailsDto.getTripDetailsChildDtoList().get(i)
+								.getTime().equals("0.0")) {
+						} else {
+							cal.setTime(cal1.getTime());
+							cal.add(Calendar.MINUTE, -(int) Float.parseFloat(detailsDto
+									.getTripDetailsChildDtoList().get(i)
+									.getTime()));
+						}
+					} else
+						cal.add(Calendar.MINUTE,
+								(int) Float.parseFloat(detailsDto
+										.getTripDetailsChildDtoList().get(i)
+										.getTime()));
+
+					detailsDto.getTripDetailsChildDtoList().get(i)
+							.setDistance(distance);
+					detailsDto
+							.getTripDetailsChildDtoList()
+							.get(i)
+							.setTime(
+									OtherFunctions.getTimePartFromDate(cal
+											.getTime()));
+				}
+
+			} catch (Exception e) {
+				System.out.println("error in changing time and dist" + e);
+			}
+
+		}
+
+	}
+	public void updateDistanceAndTime(TripDetailsDto detailsDto) throws Exception {
+
+		Calendar cal = Calendar.getInstance();
+		Calendar cal1 = Calendar.getInstance();
+
+		String logTime;		
+			try {
+				cal.setTime(OtherFunctions.sqlFormatToDate(detailsDto.getTrip_date()));
+				logTime = detailsDto.getTrip_time();
+				int hr = Integer.parseInt(logTime.split(":")[0]);
+				int mnt = Integer.parseInt(logTime.split(":")[1]);
+				float distance = (float) 0.0;
+				cal.add(Calendar.HOUR, hr);
+				cal.add(Calendar.MINUTE, mnt);
+				cal1.setTime(cal.getTime());			
+				int minusTime = 0;
+				for (int i = 0; i < detailsDto.getTripDetailsChildDtoList()
+						.size(); i++) {
+
+					distance += detailsDto.getTripDetailsChildDtoList().get(i)
+							.getDistance();
+					if (detailsDto.getTrip_log().equals("IN")) {
+						if (detailsDto.getTripDetailsChildDtoList().get(i)
+								.getTime().equals("0.0")) {
+						} else {
+							cal.setTime(cal1.getTime());
+							cal.add(Calendar.MINUTE, -(int) Float.parseFloat(detailsDto
+									.getTripDetailsChildDtoList().get(i)
+									.getTime()));
+						}
+					} else
+						cal.add(Calendar.MINUTE,
+								(int) Float.parseFloat(detailsDto
+										.getTripDetailsChildDtoList().get(i)
+										.getTime()));
+
+					detailsDto.getTripDetailsChildDtoList().get(i)
+							.setDistance(distance);
+					detailsDto
+							.getTripDetailsChildDtoList()
+							.get(i)
+							.setTime(
+									OtherFunctions.getTimePartFromDate(cal
+											.getTime()));
+				}
+
+			} catch (Exception e) {
+				System.out.println("error in changing time and dist" + e);
+			}
+		
+
+	}
+	public int checkSecurity(String siteId, String tripTime) throws Exception {
+		// TODO Auto-generated method stub
+		return tripDetailsDao.checkSecurity(siteId,tripTime);
+	}
+
+	public ArrayList<TripDetailsChildDto> getTripSheetRemoved(String tripDate,String siteId, String tripMode, String tripTime) throws Exception {
+		
+		return tripDetailsDao.getTripSheetRemoved(tripDate,siteId, tripMode, tripTime);
+	}
+
+	public TripDetailsDto getTripSheetByTrip(String tripId) throws Exception{
+			return tripDetailsDao.getTripSheetByTrip(tripId);
+	}
+
+	public void saveTrip(String tripDate, String tripLog, String siteId,String tripTime, String doneBy, String tripids) throws Exception {
+		//tripDetailsDao.saveTrip(tripDate, tripMode, siteId,tripTime, doneBy, tripids);
+		List<TripDetail> tList=new ArrayList<TripDetail>();
+		
+		tripDetailsDao.createUniqueID(tripDate, tripLog, siteId);
+		List<TripDetail> tdList=tripDetailsDao.getTripDetails(tripDate, tripLog, siteId,tripTime,tripids);
+		for(TripDetail td : tdList){
+			if(td.getStatus().equalsIgnoreCase("routed")){
+				td.setStatus("saved");
+			}else if(td.getStatus().equalsIgnoreCase("modified")){
+				td.setStatus("saveedit");
+			}else if(td.getStatus().equalsIgnoreCase("addmod")){
+					td.setStatus("addsave");
+				}
+			TripDetail t=tripDetailsDao.saveTrip(td);
+			tList.add(t);
+		}
+		
+		if(tList.size()>0){
+			for(TripDetail td: tList){
+				tripDetailsDao.getIncremenetedUnique();
+				tripDetailsDao.saveTripCode(td);
+				}
+		}
+			
+		}
+		public void saveTripSheet(String tripDate, String tripLog, String siteId,String tripTime, String doneBy, String tripids) throws Exception {
+			List<TripDetail> tList=new ArrayList<TripDetail>();
+			
+			tripDetailsDao.createUniqueID(tripDate, tripLog, siteId);
+			List<TripDetail> tdList=tripDetailsDao.getTripDetailsForTripSheet(tripDate, tripLog, siteId,tripTime,tripids);
+			logger.debug("listtttttttttttttt"+tdList.size());
+			if(tdList!=null && tdList.size()>0){
+				for(TripDetail td : tdList){
+					if(td.getStatus().equalsIgnoreCase("routed")){
+					td.setStatus("saved");
+					}
+						TripDetail t=tripDetailsDao.saveTrip(td);
+						tList.add(t);
+				
+				}
+			}
+		if(tList.size()>0){
+			for(TripDetail td: tList){
+				tripDetailsDao.getIncremenetedUnique();
+				tripDetailsDao.saveTripCode(td);
+				}
+		}
+
+	}
+
+	public ArrayList<TripDetailsDto> getTripToAssignVendor(String date,	String log, String siteId, String time) throws Exception {
+		ArrayList<TripDetailsDto> dtos = tripDetailsDao.getTripSheetSavedNotVendorAssigned(date, log, siteId, time);		
+		
+		for (int i = 0; i < dtos.size(); i++) {
+
+			if (dtos.get(i).getTrip_log().equals("IN")) {
+				dtos.get(i).setTripDetailsChildDtoObj(
+						dtos.get(i).getTripDetailsChildDtoList().get(0));
+			} else {
+				dtos.get(i).setTripDetailsChildDtoObj(
+						dtos.get(i)
+								.getTripDetailsChildDtoList()
+								.get(dtos.get(i).getTripDetailsChildDtoList()
+										.size() - 1));
+			}
+		}
+		return dtos;
+
+		
+	}
+
+	public TripDetail getTripsById(String trip) throws Exception {
+		return tripDetailsDao.getTripsById(trip);
+	}
+
+	/* Service calling in trackVehicle..*/  
+	public ArrayList<TripDetailsDto> getTripsWithVehicle(String branch,String filshift, String vehno) throws Exception {
+		return tripDetailsDao.getTripsWithVehicle(branch,filshift,vehno);
+	}
+
+	public ArrayList<TripDetailsDto> getTripSheetSaved(String vendorId,	String tripDate, String tripLog, String siteId, String tripTime) throws Exception {
+		ArrayList<TripDetailsDto> tripDetailsDtos=tripDetailsDao.getTripSheetSaved(vendorId,tripDate,tripLog,siteId,tripTime);
+		updateDistanceAndTime(tripDetailsDtos);
+		return tripDetailsDtos;
+	}
+
+	public ArrayList<TripDetailsDto> getTripSheetModified(String vendorId,	String tripDate, String tripMode, String siteId, String tripTime)	throws Exception {
+		ArrayList<TripDetailsDto> tripDetailsDtos=tripDetailsDao.getTripSheetModified(vendorId,tripDate, tripMode,siteId, tripTime);
+		updateDistanceAndTime(tripDetailsDtos);
+		return tripDetailsDtos ;
+	}
+
+	public ArrayList<TripDetailsDto> getAssignedTrip(String vendorCompany,
+			String siteId, String tripDate, String[] tripTime, String tripMode,	String src) throws Exception {
+		
+		return tripDetailsDao.getVendorAssignedTrip(vendorCompany,siteId, tripDate, tripTime,tripMode,src);
+	}
+
+	public int assaginTripVehicle(List<TripDetail> tdList) throws Exception {
+		 randomString.RandomStr(4);
+		int retVal = 0;
+		boolean flag=false;
+		if(tdList!=null && tdList.size()>0){
+			for(TripDetail td : tdList){
+				
+				if(td.getDriver().getId()!=0){
+					
+					String password=randomString.nextDriverString(td.getId());
+					  td.setDriverPswd(password);
+					  	flag=tripDetailsDao.updateTripDetails(td);
+					  	
+					 		/*Sending SMS To Driver....*/	  
+					  		if(flag){
+					  			System.out.println("Driverflag"+flag);
+					  			smsService.sendPasswordOfTripsToEscort(td.getId());
+					  			retVal=1;
+					  		}
+				}
+			}
+		}
+		return retVal;
+	}
+	
+	
+
+	public void updateApprovalStatus(List<TripDetail> tdList) throws Exception {
+		
+		for(TripDetail td : tdList){
+			for(VendorTripSheetParent vtsp : td.getVendorTripSheetParents()){
+				vtsp.setApprovalStatus("Sent for TC approval");
+				update(vtsp);
+			}
+		}	
+	}
+
+	public int setTripsReadyForTracking(List<TripDetail> tdList) throws Exception {
+		int i=0;
+		   for(TripDetail td : tdList) {
+			   i = i + setTripReadyForTracking(td.getId(), String.valueOf(td.getVehicleBean().getId()));
+		   }
+		   return i;
+	   }
+	
+	public int setTripReadyForTracking(String tripId, String vehicleNo) throws Exception {
+	    int i = tripDetailsDao.setTripReadyForTracking(tripId, vehicleNo);
+	    if(i>0) {
+		TripDetailsDto dto = mobileTripSheetService.getVehicleTripSheet(tripId); 
+		if (dto != null) {
+		updateDistanceAndTime(dto);
+		tripDetailsDao.getDriverNameAndMob(dto);
+		smsService.sendPinSMS(dto);
+		}
+	    }
+	    return i;
+	
+   }
+
+	public JSONObject getReplayData(String fromdate, String todate, String vid) {
+		return tripDetailsDao.getReplayData(fromdate, todate, vid);
+	}
+
+	public JSONObject getlivetrackingdata() {
+		return tripDetailsDao.getlivetrackingdata();
+	}
+
+	public void getTripSheetInsertion(String tripDate,String tripMode, String tripTime,String empId) throws Exception {
+		Employee emp=employeeService.getEmployeeById(empId);
+		List<EmployeeSchedule> esList=schedulingService.getSchedulingForTripSheet(tripDate,tripMode,tripTime);
+		logger.debug("EmployeeSchedule SIze"+esList.size());
+			TripDetail td=null;
+			TripDetailsChild tdc=null; 
+			
+		String type="1";
+		String lndmark="2128";
+		String siteId="1";
+		Site site=siteService.getSiteById(Integer.parseInt(siteId));
+			
+		VehicleType vehType=vehicleTypeService.getVehicleTypeById(Integer.parseInt(type));
+		Landmark lm=aplService.getLandmarkById(lndmark);
+		if(esList!=null && esList.size()>0){
+		 for(EmployeeSchedule es: esList ){
+			 td=new TripDetail();
+			 td.setTripDate(DateUtil.convertStringToDate(tripDate,  "dd/MM/yyyy","yyyy-MM-dd hh:mm::ss"));
+			 td.setTripLog(tripMode);
+			 td.setTripTime(tripTime);
+			 td.setStatus("routed");
+			 td.setSecurityStatus("NO");
+			 td.setRouteId(0);/*It should be mapped with Route*/
+			 td.setSite(site);
+			 td.setVehicleTypeBean(vehType);
+			 td.setDistance(0);
+			 TripDetail t=tripDetailsDao.insertIntoTripDetails(td);
+			 if(t!=null){				 			 
+				tdc=new TripDetailsChild();
+			 	tdc.setTripDetail(t);
+			 	tdc.setEmployeeSchedule(es);
+			 	tdc.setEmployee(emp);
+			 	tdc.setRoutedOrder(1);
+			 	tdc.setLandmark(lm);
+			 	tdc.setTime(td.getTripTime());
+			 TripDetailsChild tdChild=tripDetailsDao.insertIntoTripDetailsChild(tdc);	
+			 }
+		 }
+		} 
+		
+	}
+
+	
+	public List<TripDetail> getTripSheet(String tripDate, String tripMode,String tripTime, String empId) throws Exception {
+			return tripDetailsDao.getTripSheet(tripDate,tripMode,tripTime);
+	}
+
+	public List<TripDetail> getTripSheetSaved(String tripDate, String tripMode,	String tripTime) throws Exception {
+		return tripDetailsDao.getTripSheetSaved(tripDate,tripMode,tripTime);
+	}
+
+	public List<TripDetail> getActualTripSheet(String tripDate,String tripMode, String tripTime) throws Exception {
+		return tripDetailsDao.getActualTripSheet(tripDate,tripMode,tripTime);
+	}
+
+	public List<EmployeeSchedule> getSchedulesbyDate(String status,String empid,String fromdate,String todate) throws Exception
+	{
+		return tripDetailsDao.getSchedulesbyDate(status, empid, fromdate, todate);
+	}
+	
+	public boolean CancelSchedule(String schid) throws Exception{
+		return tripDetailsDao.CancelSchedule(schid);
+	}
+	
+	public boolean ModifySchedule(String schid,String time,String logtype,String date) throws Exception{
+		return tripDetailsDao.ModifySchedule(schid, time, logtype,date);
+	}
+	
+	public EmployeeSchedule getschedulebyId(String schid) throws Exception{
+		return tripDetailsDao.getschedulebyId(schid);	}
+	
+}

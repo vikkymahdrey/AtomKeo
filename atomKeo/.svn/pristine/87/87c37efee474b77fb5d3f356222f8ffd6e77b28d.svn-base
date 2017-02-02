@@ -1,0 +1,159 @@
+package com.agiledge.atom.controller;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.agiledge.atom.dao.intfc.OtherDao;
+import com.agiledge.atom.entities.Adhocapprovar;
+import com.agiledge.atom.entities.Adhocbooking;
+import com.agiledge.atom.entities.Adhoctype;
+import com.agiledge.atom.entities.Employee;
+import com.agiledge.atom.entities.Role;
+import com.agiledge.atom.entities.TripDetail;
+import com.agiledge.atom.entities.TripDetailsChild;
+import com.agiledge.atom.service.intfc.AdhocService;
+import com.agiledge.atom.service.intfc.EmployeeService;
+import com.agiledge.atom.service.intfc.LoginService;
+
+@Controller
+@RequestMapping("/")
+public class EmployeeController {
+	
+	private static final Logger logger = Logger.getLogger(EmployeeController.class);
+	
+	@Autowired
+	private AdhocService adhocService;
+	
+	@Autowired 
+	private LoginService loginService;
+	
+	@Autowired
+	private EmployeeService employeeService;
+	
+	@Autowired
+	private OtherDao otherDao;
+	
+	
+    @RequestMapping(value= {"/employeeHome"}, method=RequestMethod.GET)
+	public ModelAndView home(HttpServletRequest request, HttpServletResponse response) throws Exception{
+    	
+    	Employee userLoggedIn = (Employee) request.getSession().getAttribute("userLoggedIn");
+    	Role userRole = (Role) request.getSession().getAttribute("empRole");
+      	String role = userRole.getUsertype();
+    	List<Adhocbooking> adhocBookings = new ArrayList<Adhocbooking> ();
+    	List<Adhocbooking> adhocNotifications = new ArrayList<Adhocbooking> ();
+    	List<TripDetail> tripDetails  = new ArrayList<TripDetail> ();
+    	
+    	if(role.equalsIgnoreCase("admin")||role.equalsIgnoreCase("tm")||role.equalsIgnoreCase("ta")||role.equalsIgnoreCase("tc")||role.equalsIgnoreCase("v")){
+    	// Need to display all the pending adhoc boooking requests by all users
+    		/*atomKeo Testing
+    		try {
+				adhocBookings = adhocService.getAllPendingAdhocBookings();
+			} catch (Exception e) {
+				logger.error("Error in fetching the pendng adhoc requests ",e);
+			}*/
+    		logger.debug("Total pending adhoc bookings ::: "+ adhocBookings.size());
+    	}
+    	
+    	// FIlter out the adhoc bookings that are to be approved by the user logged in from all the pending adhoc requests
+    	Employee lineManager = null;
+    	Adhoctype adhocType = null;
+    	Role managerRole = null;
+    	List<Adhocapprovar> adhocApprovers = new ArrayList<Adhocapprovar> ();
+    	/*atomKeo Testing
+    	if(adhocBookings != null && adhocBookings.size() > 0){
+    		
+    		for(Adhocbooking eachBooking : adhocBookings){
+    			try {
+					lineManager = employeeService.getEmployeeById(eachBooking.getEmployee3().getLineManager());
+					// logger.debug("line manager for "+eachBooking.getEmployee3().getId()+" is "+lineManager.getId());
+				} catch (Exception e) {
+					logger.debug("no manager found for the user "+eachBooking.getEmployee3().getDisplayname());
+				}
+    			if(lineManager != null && (lineManager.getId().equals(userLoggedIn.getId()))){
+    				logger.debug("userLoggedIn is matched with lineManager for "+eachBooking.getEmployee3().getId());
+    				managerRole = lineManager.getRole();
+    				adhocApprovers = managerRole.getAdhocapprovars();
+    				logger.debug("Totala approvers on the role "+managerRole.getUsertype()+" is = "+adhocApprovers.size());
+    				if(adhocApprovers.size() >0){
+    					for(Adhocapprovar eachApprovar : adhocApprovers){
+    						logger.debug("appover status :: "+eachApprovar.getStatus());
+    						if(eachApprovar.getStatus().equals("a")){
+	    						adhocType = eachApprovar.getAdhoctype();
+	    						logger.debug("adhoc type in db : "+adhocType.getType());
+	    						logger.debug("adhoc type of the user : "+eachBooking.getAdhocType());
+	    						logger.debug("site name from the db : "+adhocType.getSiteBean().getSiteName());
+	    						logger.debug("site name of the user : "+eachBooking.getSite().getSiteName());
+	    						if((adhocType.getSiteBean().getId() == eachBooking.getSite().getId()) && (eachBooking.getAdhocType().equals(adhocType.getType())))
+	    							adhocNotifications.add(eachBooking);
+    						}
+    					}
+    				}
+    			}
+    			 		
+    		}
+    	}
+    		
+    	logger.debug("Total adhoc notifications ::: "+adhocNotifications.size());
+    	
+    	List<TripDetailsChild> tripChildren = userLoggedIn.getTripDetailsChilds();
+    	for(TripDetailsChild eachTripChild : tripChildren)
+    		tripDetails.add(eachTripChild.getTripDetail());*/
+    	
+    	ModelAndView returnVal = new ModelAndView("employeeHome");
+    	returnVal.addObject("tripDetails", tripDetails);
+    	returnVal.addObject("adhocBookings", adhocBookings);
+    	returnVal.addObject("adhocNotifications",adhocNotifications);
+    	return returnVal;
+    	
+	}
+    
+    @RequestMapping(value= {"/vendorsHome"})
+	public String vendorHomeHandler(HttpServletRequest request,HttpSession session,Map<String,Object> map) throws Exception  {
+    	logger.debug("IN the vendorHomeHandler controller");
+    	String employeeId=session.getAttribute("user").toString();
+    	String roleId=session.getAttribute("roleId").toString();
+		String role=session.getAttribute("role").toString();
+		 
+    	map.put("AdhocNotificationCount",adhocService.getAdhocNotificationCount(employeeId, roleId,role));
+    return "vendors_home";
+    }
+    
+    @RequestMapping(value= {"/viewExternalEmp"})
+	public String getExternalEmpHandler(HttpServletRequest request,Map<String,Object> map) throws Exception  {
+		List<Employee> empEnabledList = employeeService.getEnabledExternalemployees();
+		List<Employee> empAllList = employeeService.getAllExternalemployees();
+		map.put("empEnabledList", empEnabledList);
+		map.put("empAllList", empAllList);
+			return "viewallExternal";
+	}
+    
+    @RequestMapping(value= {"/managerHome"})
+	public String managerHomeHandler(HttpServletRequest request,HttpSession session,Map<String,Object> map) throws Exception  {
+    	String empId=(String) session.getAttribute("user");
+		logger.debug("print empId as "+empId);
+		map.put("ob",otherDao.getEmployeeDet(empId));
+    return "manager_home";
+    }
+    
+    @RequestMapping(value= {"/transportmanageHome"})
+   	public String transportmanageHomeHandler(HttpServletRequest request,HttpSession session,Map<String,Object> map) throws Exception  {
+       	String empId=(String) session.getAttribute("user");
+   		logger.debug("print empId as "+empId);
+   		map.put("ob",otherDao.getEmployeeDet(empId));
+       return "transportmanager_home";
+       }
+
+}

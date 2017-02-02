@@ -1,0 +1,634 @@
+package com.agiledge.atom.service.impl;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.json.JSONException;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.agiledge.atom.config.files.OtherFunctions;
+import com.agiledge.atom.constants.SettingsConstant;
+import com.agiledge.atom.dao.intfc.DeviceDao;
+import com.agiledge.atom.dao.intfc.PanicDao;
+import com.agiledge.atom.entities.TripDetail;
+import com.agiledge.atom.entities.TripDetailsChild;
+import com.agiledge.atom.entities.Vehicle;
+import com.agiledge.atom.entities.VendorTripSheet;
+import com.agiledge.atom.entities.VendorTripSheetParent;
+import com.agiledge.atom.service.intfc.DeviceService;
+import com.agiledge.atom.service.intfc.SMSService;
+
+@Service
+public class DeviceServiceImpl implements DeviceService {
+	private static final Logger logger = Logger.getLogger(DeviceServiceImpl.class);
+	@Autowired
+	DeviceDao deviceDao;
+	
+	@Autowired
+	PanicDao panicDao;
+	
+	@Autowired
+	private SMSService smsService;
+	
+	
+	public JSONObject checkpassword(JSONObject json) {
+
+		return deviceDao.checkpassword(json);
+	}
+
+	public JSONObject inserttrackingdata(JSONObject json) {
+
+		return deviceDao.inserttrackingdata(json);
+	}
+
+	public JSONObject stoptrip(JSONObject json) {
+		return deviceDao.stoptrip(json);
+	}
+
+	public JSONObject updateGeoCode(String imei, String tripId,
+			double latitude, double longitude, double distanceCovered,
+			long timeElapsed, long nuance) {
+
+		JSONObject rObj = new JSONObject();
+		try {
+			int retVal = deviceDao.updateGeoCode(imei, tripId, latitude,
+					longitude, nuance);
+			if (retVal > 0) {
+				retVal = deviceDao.updateDistanceCovered(tripId,
+						distanceCovered, timeElapsed);
+				rObj.put("ACTION", "vehiclePosition");
+				rObj.put("retVal", retVal);
+				rObj.put("result", "true");
+
+			} else {
+				rObj.put("ACTION", "vehiclePosition");
+				rObj.put("retVal", retVal);
+				rObj.put("result", "false");
+			}
+
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	
+		return rObj;
+
+	}
+
+	public JSONObject updateGeoCodePassive(String imei, double latitude,
+			double longitude, long nuance) {
+		JSONObject rObj = new JSONObject();
+
+		try {
+			/*
+			 * int retVal = deviceDao.updateGeoCodePassive(imei, latitude,
+			 * longitude, nuance); if(retVal>0) {
+			 * 
+			 * rObj.put("ACTION", "fullVehiclePosition"); rObj.put("retVal",
+			 * retVal); rObj.put("result", "true");
+			 * 
+			 * } else{ rObj.put("ACTION", "fullVehiclePosition");
+			 * rObj.put("retVal", retVal); rObj.put("result", "false"); }
+			 */
+
+			rObj.put("ACTION", "fullVehiclePosition");
+			rObj.put("result", "true");
+
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return rObj;
+	}
+
+	public JSONObject employeeCheckIn(String imei, String tripId,
+			String empCode, double latitude, double longitude, long nuance) {
+		JSONObject rObj = new JSONObject();
+
+		try {
+			int retVal = deviceDao.employeeCheckIn(tripId, empCode, latitude,
+					longitude, nuance);
+			deviceDao.updateGeoCode(imei, tripId, latitude,
+					longitude, nuance);
+
+			if (retVal == 0) {
+				rObj.put("ACTION", "employeeGetIn");
+				rObj.put("result", "false");
+			} else {
+				rObj.put("ACTION", "employeeGetIn");
+				rObj.put("result", "true");
+			}
+
+		} catch (JSONException e) {
+
+			e.printStackTrace();
+		}
+		return rObj;
+	}
+
+	public JSONObject employeeCheckOut(String imei, String tripId,
+			String empCode, double latitude, double longitude, long nuance) {
+		JSONObject rObj = new JSONObject();
+
+		try {
+			int retVal = deviceDao.employeeCheckOut(tripId, empCode, latitude,
+					longitude, nuance);
+			deviceDao.updateGeoCode(imei, tripId, latitude,
+					longitude, nuance);
+			if (retVal == 0) {
+				rObj.put("ACTION", "employeeGetOut");
+				rObj.put("result", "false");
+
+			} else {
+				rObj.put("ACTION", "employeeGetOut");
+				rObj.put("result", "true");
+			}
+
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		return rObj;
+
+	}
+
+	public JSONObject startTrip(String tripId, String imei) {
+
+		int retVal = 0;
+		JSONObject rObj = null;
+		// boolean validFalg= validateTripStart(tripId);
+		boolean isValid = true;
+		if (isValid) {
+			retVal = deviceDao.startTrip(tripId, imei);
+		}
+		rObj = new JSONObject();
+		try {
+			rObj.put("ACTION", "startTrip");
+			if (isValid == true) {
+
+				if (retVal == 1) {
+					rObj.put("result", "true");
+					rObj.put("message", "Trip started successfully");
+				} else if (retVal == -2) {
+					rObj.put("result", "false");
+					rObj.put("message", "This is stopped trip");
+				} else {
+					rObj.put("result", "false");
+					rObj.put("message", "Unable to start the trip");
+				}
+			} else {
+				rObj.put("result", "false");
+				rObj.put("message", "Unable to start trip. ");
+			}
+
+		} catch (Exception e) {
+			System.out.println("erro" + e);
+		}
+
+		return rObj;
+
+	}
+
+	public JSONObject stopTrip(String tripId) {
+		int retVal = 0;
+		JSONObject rObj = null;
+		boolean isValid = true;
+
+		if (isValid) {
+			retVal = deviceDao.stopTrip(tripId);
+		}
+		rObj = new JSONObject();
+		try {
+			rObj.put("ACTION", "stopTrip");
+			if (isValid == true) {
+
+				if (retVal == 1) {
+					rObj.put("result", "true");
+					rObj.put("message", "Trip stopped successfully");
+				} else {
+					rObj.put("result", "false");
+					rObj.put("message", "Unable to stop the trip");
+				}
+			} else {
+				rObj.put("result", "false");
+				rObj.put("message", "Unable to stop trip. ");
+			}
+
+		} catch (Exception e) {
+			System.out.println("erro" + e);
+		}
+
+		return rObj;
+	}
+
+	public JSONObject forceStopTrip(String tripId) {
+
+		int retVal = 0;
+		JSONObject rObj = null;
+
+		retVal = deviceDao.forceStopTrip(tripId);
+
+		rObj = new JSONObject();
+		try {
+			rObj.put("ACTION", "forceStopTrip");
+
+			if (retVal == 1) {
+				rObj.put("result", "true");
+				rObj.put("message", "Trip stopped successfully");
+			} else {
+				rObj.put("result", "false");
+				rObj.put("message", "Unable to stop the trip");
+			}
+
+		} catch (Exception e) {
+			System.out.println("erro" + e);
+		}
+
+		return rObj;
+
+	}
+
+	public JSONObject logout(String imei) {
+		JSONObject rObj = new JSONObject();
+		try {
+			int flag;
+			
+			flag = deviceDao.logout(imei);
+			if (flag != 0) {
+				rObj.put("ACTION", "logout");
+				rObj.put("result", "true");
+			} else {
+				rObj.put("ACTION", "logout");
+				rObj.put("result", "false");
+			}
+		} catch (Exception e) {
+			System.out.println("Exception in lOgin service" + e);
+		}
+		return rObj;
+	}
+
+	
+	
+	
+	public JSONObject ValidateUserOTP(String password, String imei) {
+		JSONObject rObj = new JSONObject();
+		try {
+			boolean flag;
+			 System.out.println(" inside ValidateUserOTP..");
+			logout(imei);
+			 
+
+			int driverid=deviceDao.checkUserOTP(password, imei);
+			
+			if(driverid>0) {
+				
+				//autoMapDeviceAndVehicle(dto.getUsername() , imei);
+				rObj =getTripSheet( imei) ;
+				 
+				 
+			} else {
+				rObj.put("ACTION", "loginOTP");
+				rObj.put("result", "false");
+			}
+		} catch (Exception e) {
+			System.out.println("Exception in lOgin service" + e);
+		}
+		return rObj;
+		
+		
+	}
+
+	
+	
+	public JSONObject getTripSheet(String imei) {
+		
+		JSONObject rObj = null;
+		try {
+			
+				TripDetail td= deviceDao.getTripByDriverImei(imei);
+				if(td!=null){
+				VendorTripSheetParent vtp= td.getVendorTripSheetParents().get(0);
+				Vehicle v= td.getVehicleBean();
+				List<VendorTripSheet> vtslist= td.getVendorTripSheets();
+			
+			//TripDetailsDto dto = new MobileTripSheetDao().getVehicleTripSheetFromImei(imei );
+			updateDistanceAndTime(td);
+			System.out.println("After checkUserOTP");
+			
+			
+			if (td != null) {
+				System.out.println("::: " + td.getId());
+				
+				deviceDao.setTripAsDownloaded(td.getId(),imei,v.getRegNo());
+		
+			}
+			rObj = new JSONObject();
+			
+			rObj.put("ACTION", "gettrip");
+			rObj.put("tripId", td.getId());
+			rObj.put("tripDate",new SimpleDateFormat("yyyy-MM-dd").format(td.getTripDate()).toString());
+			rObj.put("tripCode", td.getTripCode());
+			rObj.put("tripTime",  OtherFunctions. changeTimeFormat( td.getTripTime(),  "HH:mm", "hh:mm-a"));
+			rObj.put("tripLog", td.getTripLog());
+			rObj.put("vehicle", td.getVehicleTypeBean().getType());
+			rObj.put("status", OtherFunctions.isEmpty (vtp.getStatus())?"Initial":vtp.getStatus() );
+			rObj.put("distanceCovered",vtp.getDistanceCovered() );
+			rObj.put("timeElapsed", vtp.getTimeElapsed());
+			rObj.put("escort", "NO");
+			rObj.put("isSecurity", "NO");
+			rObj.put("cometAuthType", "password type");
+			rObj.put("result", "true");
+			rObj.put("forceStopPin", "1234");
+			rObj.put("doubleAuthenticationForEmpPickup",true);
+			rObj.put("doubleAuthenticationForEmpDrop",true);
+			rObj.put("doubleAuthenticationForEscortPickup",false);
+			rObj.put("doubleAuthenticationForEscortDrop",false);
+			rObj.put("firstEscortAuthBeforeEmpAuthPickup",false);
+			rObj.put("secondEscortAuthAfterEmpAuthPickup",false);
+			rObj.put("firstEscortAuthBeforeEmpAuthDrop",false);
+			rObj.put("secondEscortAuthAfterEmpAuthDrop",false); 
+			
+			
+			JSONArray empNameArray = new JSONArray();
+			JSONArray empCodeArray = new JSONArray();
+			JSONArray aplArray = new JSONArray();
+			JSONArray showStatusArray = new JSONArray();
+			JSONArray securityUserNameArray = new JSONArray();
+			JSONArray getInStatusArray = new JSONArray();
+			JSONArray genderArray = new JSONArray();
+			JSONArray emplatitude=new JSONArray();
+			JSONArray emplongitudes=new JSONArray();
+			JSONArray employeePinArray = new JSONArray();
+			JSONArray empPickuptimings=new JSONArray();
+			for (TripDetailsChild child : td.getTripDetailsChilds()) {
+				for(VendorTripSheet vts : vtslist){
+					if(child.getEmployee().getId()==vts.getEmployee().getId()){
+				empCodeArray.add(child.getEmployee().getId());
+				empNameArray.add(child.getEmployee().getDisplayname());
+				if(SettingsConstant.comp.equalsIgnoreCase("keo"))
+				{
+					aplArray.add(child.getEmployee().getAddress());
+					
+					/*emplatitude.add(child.getEmployee().getEmpLat() == null ? "": child.getEmployee().getEmpLat()+"" );
+					emplongitudes.add(child.getEmployee().getEmpLong()== null ? "": child.getEmployee().getEmpLong()+""  );*/
+				}
+				else{
+					aplArray.add(child.getLandmark().getPlaceBean().getAreaBean().getArea() + " " + child.getLandmark().getPlaceBean().getPlace()
+							+ " " + child.getLandmark().getLandmark());
+					
+					/*emplatitude.add(child.getLandmark().getLatitude()+"");
+					emplongitudes.add(child.getLandmark().getLongitude()+"");*/
+				}
+				
+				showStatusArray.add(vts.getShowStatus());
+				getInStatusArray.add(vts.getCurStatus()==null ? "INIT":vts.getCurStatus() );
+				genderArray.add(child.getEmployee().getGender());
+				
+				// USING PERSONNEL NO INSTERD OF KEYPIN
+				int loginidlength=child.getEmployee().getPersonnelNo().length();
+				employeePinArray.add(child.getEmployee().getPersonnelNo().substring(loginidlength-4));
+				empPickuptimings.add(child.getTime());
+				
+					
+					
+					}
+				}
+
+			}
+			//no security in trip  for keo
+			securityUserNameArray.add("");
+			
+			
+			rObj.put("secUserName",securityUserNameArray);
+			rObj.put("empName", empNameArray);
+			rObj.put("empCode", empCodeArray);
+			rObj.put("apls", aplArray);
+			rObj.put("showStatus", showStatusArray);
+			rObj.put("getInStatus", getInStatusArray);
+			rObj.put("gender", genderArray);
+			//rObj.put("emplats", emplatitude);
+			//rObj.put("emplongs", emplongitudes);
+			rObj.put("employeeKeyPins", employeePinArray);
+			rObj.put("emptimes", empPickuptimings);
+				}else{
+					rObj.put("ACTION", "gettrip");
+					rObj.put("result", "false");
+				}
+
+		} catch (Exception e) {
+			logger.error("Exception in TripSheetService.getTripSheet :",e);
+		}
+		System.out.println("trip returns" + rObj);
+		return rObj;
+	}
+
+	private void updateDistanceAndTime(TripDetail td) {
+		// TODO Auto-generated method stub
+		Calendar cal = Calendar.getInstance();
+		Calendar cal1 = Calendar.getInstance();
+
+		System.out.println("time 1" + cal.getTime());
+		String logTime;
+		try{
+			cal.setTime(OtherFunctions.sqlFormatToDate(td.getTripDate().toString()));
+			logTime=td.getTripTime();
+			int hr = Integer.parseInt(logTime.split(":")[0]);
+			int mnt = Integer.parseInt(logTime.split(":")[1]);
+			float distance = (float) 0.0;
+			cal.add(Calendar.HOUR, hr);
+			cal.add(Calendar.MINUTE, mnt);
+			cal1.setTime(cal.getTime());
+			System.out.println(cal.getTime());
+			List<TripDetailsChild> TdClist= td.getTripDetailsChilds();
+			for(TripDetailsChild tdc : TdClist){
+				distance += tdc.getDist();
+				if(td.getTripLog().equalsIgnoreCase("IN")){
+					if(tdc.getTime().equals("0.0")){
+						
+					}else{
+						cal.setTime(cal1.getTime());
+						cal.add(Calendar.MINUTE, -(int) Float.parseFloat(tdc.getTime()));
+					}
+				}else{
+					cal.add(Calendar.MINUTE,(int) Float.parseFloat(tdc.getTime()));						
+					tdc.setDist(distance);				
+					tdc.setTime(OtherFunctions.getTimePartFromDate(cal.getTime()));
+					System.out.println(tdc.getEmployee().getEmployeeFirstName()+"   "+tdc.getTime());
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("error in changing time and dist" + e);
+		}
+	}
+	
+	public JSONObject panicAlarm(String imei, String time) {
+		JSONObject rObj = new JSONObject(); 
+		String activatedBy="DRIVER APP";
+		    int retVal=0;	
+		   
+		    	  
+		   
+		    try {
+		    	
+		    	
+		    	TripDetail td= deviceDao.getTripByDriverImei(imei);
+		    	if(td!=null){
+		    	 retVal= panicDao.insertPanicDetails(td,activatedBy);
+		    	
+		    	
+		    	}
+		    	 
+				if (retVal == 0) {				
+					rObj.put("ACTION", "alarm");
+					rObj.put("result", "false");
+					
+				} else {
+				
+					smsService.sendSMSOnPanic(td,time);
+					rObj.put("ACTION", "alarm");
+					rObj.put("result", "true");
+				}
+				
+			}  catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		//	System.out.println(rObj);
+			return rObj;
+		
+		
+		
+	}
+
+
+	public JSONObject bulkInsert(JSONObject obj) {
+		JSONObject rObj=new JSONObject();
+		try {
+			
+		 org.json.JSONObject njson = new org.json.JSONObject(obj.toJSONString());
+		 
+		  
+		int length = njson.length();
+
+		for(int i=0; i< length; i++ ) {
+		
+		
+		
+		
+		
+		if (obj.get("ACTION").equals("LOGINOTP")) {
+			
+			rObj =ValidateUserOTP( obj.get("password").toString(),obj.get("IMEI").toString());
+			
+		}
+		else if (obj.get("ACTION").equals("login")) {
+			
+			rObj =ValidateUserOTP( obj.get("password").toString(),obj.get("IMEI").toString());
+			//rObj = deviceService.ValidateUser(obj.get("userName").toString(), obj.get("password").toString(),	obj.get("IMEI").toString());
+		} 
+		/*else if (obj.get("ACTION").equals("gettrips") ){
+			
+			rObj =deviceService.getTrips(obj.get("IMEI").toString(),obj.get("date").toString());
+		
+		
+		}*/
+		else if (obj.get("ACTION").equals("gettrip") ) {
+			
+			rObj =getTripSheet(obj.get("IMEI").toString() );
+		
+		} else if (obj.get("ACTION").equals("vehiclePosition")) {
+			
+			rObj = updateGeoCode(obj.get("IMEI").toString(),obj.get("tripId").toString(),Double.parseDouble( obj.get("latitude").toString()),Double.parseDouble(obj.get("longitude").toString()),Double.parseDouble(obj.get("distanceCovered").toString()),Long.parseLong(obj.get("timeElapsed").toString()), Long.parseLong(obj.get("NUANCE").toString()));
+		
+		} else if (obj.get("ACTION").equals("fullVehiclePosition")) {
+
+			rObj = updateGeoCodePassive(obj.get("IMEI").toString(),Double.parseDouble( obj.get("latitude").toString()),Double.parseDouble(obj.get("longitude").toString()), Long.parseLong(obj.get("NUANCE").toString()));
+			
+		
+		} else if (obj.get("ACTION").equals("employeeGetIn") ) {
+			
+			rObj = employeeCheckIn(obj.get("IMEI").toString(),obj.get("tripId").toString(), obj.get("empCode").toString(),Double.parseDouble( obj.get("latitude").toString()),Double.parseDouble(obj.get("longitude").toString()), Long.parseLong(obj.get("NUANCE").toString()));
+		
+		} else if (obj.get("ACTION").equals("employeeGetOut") ) {
+			
+			rObj = employeeCheckOut(obj.get("IMEI").toString(),obj.get("tripId").toString(), obj.get("empCode").toString(),Double.parseDouble( obj.get("latitude").toString()),Double.parseDouble(obj.get("longitude").toString()), Long.parseLong(obj.get("NUANCE").toString()));
+		
+			
+		} else if (obj.get("ACTION").equals("startTrip")) {
+			
+			rObj =startTrip(obj.get("tripId").toString(),obj.get("IMEI").toString());
+			
+		} else if (obj.get("ACTION").equals("stopTrip")	) {
+
+			rObj = stopTrip(obj.get("tripId").toString());
+	
+		} else if (obj.get("ACTION").equals("forceStopTrip")) {
+			
+			rObj = forceStopTrip(obj.get("tripId").toString());
+		}
+		else if (obj.get("ACTION").equals("logout")) {
+			
+			rObj =  logout(obj.get("IMEI").toString());
+		}
+		else if(obj.get("ACTION").equals("downloadSettings")){
+			  rObj.put("result", "true");
+			  rObj.put("ACTION", "downloadSettings");
+			  rObj.put("versionNo",  "1.0");
+			  rObj.put("configurationType", "password type");
+		}
+	/*
+       // currently for keonics this module is not necessary
+        
+     		else if (obj.get("ACTION").equals("updateTime")) {
+			String time = "";
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(new Date());
+			int hour = cal.get(Calendar.HOUR);
+			int minute = cal.get(Calendar.MINUTE);
+			time = "" + (hour < 10 ? "0" + hour : hour);
+			time = time + ":" + (minute < 10 ? "0" + minute : minute);
+	
+
+			rObj = deviceService.updateTime(obj.get("tripId").toString(), time,obj.get("userName").toString(), obj.get("password").toString());
+		}
+		
+		 
+     */ 
+        	else if (obj.get("ACTION").equals("alarm")) {
+			String time = "";
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(new Date());
+			int hour = cal.get(Calendar.HOUR);
+			int minute = cal.get(Calendar.MINUTE);
+			time = "" + (hour < 10 ? "0" + hour : hour);
+			time = time + ":" + (minute < 10 ? "0" + minute : minute);
+			rObj =panicAlarm(obj.get("IMEI").toString(),time);
+		
+		}   
+		
+	 
+		}
+		 
+		  
+	}catch(Exception e) {
+		
+	}  
+		return rObj; 	
+		
+		
+		
+		
+	}
+
+	
+	
+	
+
+
+	
+}

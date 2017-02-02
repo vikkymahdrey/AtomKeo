@@ -1,0 +1,11 @@
+package com.agiledge.atom.service.intfc;
+
+import java.util.List;
+
+import com.agiledge.atom.dto.EscalationMatrixDto;
+import com.agiledge.atom.entities.Escalationmatrix;
+
+public interface PanicService {
+	public List<Escalationmatrix> getEscallationmatrix() throws Exception;
+	public String saveescalation(List<EscalationMatrixDto> list) throws Exception;
+}

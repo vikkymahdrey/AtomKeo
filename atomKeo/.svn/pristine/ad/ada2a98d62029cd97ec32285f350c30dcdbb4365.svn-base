@@ -1,0 +1,36 @@
+package com.agiledge.atom.service.intfc;
+
+import org.json.simple.JSONObject;
+
+public interface DeviceService {
+	
+	public JSONObject checkpassword(JSONObject json);
+	public JSONObject inserttrackingdata(JSONObject json);
+	public JSONObject stoptrip(JSONObject json);
+	
+	
+	public JSONObject updateGeoCode(String imei, String tripId,double latitude, double longitude, double distanceCovered, long timeElapsed, long nuance) ;
+
+	public JSONObject updateGeoCodePassive(String imei,double latitude, double longitude, long nuance  );
+	
+	public JSONObject employeeCheckIn(String imei, String tripId,String empCode, double latitude, double longitude,long nuance);
+	
+	public JSONObject employeeCheckOut(String imei, String tripId,String empCode, double latitude, double longitude,long nuance);
+	
+	public JSONObject startTrip(String tripId, String imei);
+	
+	public JSONObject stopTrip(String tripId);
+	
+	public JSONObject forceStopTrip(String tripId);
+	
+	public JSONObject logout(String imei) ;
+	
+	
+	public JSONObject ValidateUserOTP(String password,String IMEI);
+
+	public JSONObject getTripSheet(String IMEI);
+	
+	public JSONObject bulkInsert(JSONObject obj);
+	
+	
+}

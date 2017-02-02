@@ -1,0 +1,82 @@
+<?xml  version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:lang="http://www.springframework.org/schema/lang"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:tx="http://www.springframework.org/schema/tx"
+
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+		http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+	<context:annotation-config />
+
+
+	<bean id="coreatomDS" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close" p:driverClassName="${jdbc.driverClassName}"
+		p:url="${jdbc.databaseurl}" p:username="${jdbc.username}" p:password="${jdbc.password}" />
+
+
+	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+		<property name="entityManagerFactory" ref="entityManagerFactory" />
+		<!-- <property name="jpaDialect" ref="jpaDialect"/> -->
+	</bean>
+	<tx:annotation-driven transaction-manager="transactionManager" />
+
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="*" />
+			<!-- rollback-for="com.agiledge.atom.setup.executionhandler.MyException" -->
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<aop:pointcut id="serviceOperation"
+			expression="execution(* com.agiledge.atom.service.impl.*.*(..))" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="serviceOperation" />
+	</aop:config>
+
+	<!-- <bean id="jpaDialect" class="org.springframework.orm.jpa.vendor.HibernateJpaDialect"/> -->
+	<bean id="entityManagerFactory"
+		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+
+		<!-- <property name="persistenceXmlLocation" value="persistence-coreatom.xml" 
+			/> -->
+		<property name="persistenceUnitName" value="coreatomPU" />
+		<property name="dataSource" ref="coreatomDS" />
+		<property name="packagesToScan" value="com.agiledge.atom.entities" />
+		<property name="jpaVendorAdapter">
+			<bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+				<property name="showSql" value="true" />
+				<property name="databasePlatform" value="${jdbc.dialect}" />
+			</bean>
+		</property>
+
+		<!-- JPA cache configuration using spring and hibernate. -->
+		<!-- <property name="jpaPropertyMap"> <map> <entry key="hibernate.cache.region.factory_class" 
+			value="org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory"/> <entry 
+			key="hibernate.cache.use_second_level_cache" value="true"/> <entry key="hibernate.cache.use_query_cache" 
+			value="true"/> <entry key="javax.persistence.sharedCache.mode" value="ENABLE_SELECTIVE" 
+			/> </map> </property> -->
+		<property name="jpaProperties">
+			<props>
+				<prop key="hibernate.enable_lazy_load_no_trans">true</prop>
+			</props>
+		</property>
+		<!-- <shared-cache-mode>ALL</shared-cache-mode> -->
+
+	</bean>
+
+
+	<!-- <bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean"> 
+		<property name="dataSource" ref="dataSource" /> <property name="configLocation"> 
+		<value>classpath:hibernate.cfg.xml</value> </property> <property name="configurationClass"> 
+		<value>org.hibernate.cfg.AnnotationConfiguration</value> </property> <property 
+		name="hibernateProperties"> <props> <prop key="hibernate.hbm2ddl.auto">update</prop> 
+		<prop key="hibernate.dialect">${jdbc.dialect}</prop> <prop key="hibernate.show_sql">true</prop> 
+		</props> </property> </bean> -->
+	<tx:annotation-driven />
+
+</beans>
